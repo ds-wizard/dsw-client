@@ -44,6 +44,8 @@ module KMEditor.Common.Models.Events exposing
     , getAddQuestionEventEntityVisibleName
     , getAddQuestionEventQuestionTypeString
     , getAddQuestionUuid
+    , getAddQuestionText
+    , getAddQuestionTitle
     , getAddReferenceEventEntityVisibleName
     , getAddReferenceUuid
     , getEditQuestionEventEntityVisibleName
@@ -1724,6 +1726,15 @@ getEditReferenceEventEntityVisibleName =
 getAddQuestionUuid : AddQuestionEventData -> String
 getAddQuestionUuid =
     mapAddQuestionEventData .questionUuid .questionUuid .questionUuid .questionUuid
+
+getAddQuestionTitle : AddQuestionEventData -> String
+getAddQuestionTitle =
+    mapAddQuestionEventData .title .title .title .title
+
+
+getAddQuestionText : AddQuestionEventData -> Maybe String
+getAddQuestionText =
+    mapAddQuestionEventData .text .text .text .text
 
 
 getEditQuestionUuid : EditQuestionEventData -> String

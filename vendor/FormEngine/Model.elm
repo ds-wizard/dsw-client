@@ -7,6 +7,7 @@ module FormEngine.Model exposing
     , FormTree
     , FormValues
     , IntegrationReplyValue(..)
+    , FormValue
     , ItemElement
     , Option(..)
     , OptionDescriptor

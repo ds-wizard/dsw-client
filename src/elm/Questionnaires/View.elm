@@ -7,6 +7,7 @@ import Questionnaires.Create.View
 import Questionnaires.Detail.View
 import Questionnaires.Edit.View
 import Questionnaires.Index.View
+import Questionnaires.Migration.View
 import Questionnaires.Models exposing (Model)
 import Questionnaires.Msgs exposing (Msg(..))
 import Questionnaires.Routing exposing (Route(..))
@@ -26,3 +27,6 @@ view route wrapMsg appState model =
 
         Index ->
             Questionnaires.Index.View.view (wrapMsg << IndexMsg) appState model.indexModel
+
+        Migrate uuid ->
+            Questionnaires.Migration.View.view (wrapMsg << MigrationMsg) model.migrationModel

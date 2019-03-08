@@ -11,6 +11,7 @@ type Route
     | Detail String
     | Edit String
     | Index
+    | Migrate String
 
 
 moduleRoot : String
@@ -24,6 +25,7 @@ parses wrapRoute =
     , map (wrapRoute << Detail) (s moduleRoot </> s "detail" </> string)
     , map (wrapRoute << Edit) (s moduleRoot </> s "edit" </> string)
     , map (wrapRoute <| Index) (s moduleRoot)
+    , map (wrapRoute << Migrate) (s moduleRoot </> string </> s "migration")
     ]
 
 
@@ -46,6 +48,9 @@ toUrl route =
 
         Index ->
             [ moduleRoot ]
+
+        Migrate uuid ->
+            [ moduleRoot, uuid, "migration" ]
 
 
 isAllowed : Route -> Maybe JwtToken -> Bool

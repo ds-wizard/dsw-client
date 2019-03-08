@@ -5,11 +5,14 @@ module Common.Questionnaire.Models exposing
     , FormExtraData
     , Model
     , QuestionnaireDetail
+    , QuestionFlags
+    , QuestionFlagType(..)
     , calculateUnansweredQuestions
     , chapterReportCanvasId
     , createChartConfig
     , encodeFeedbackFrom
     , encodeQuestionnaireDetail
+    , encodeQuestionFlag
     , feedbackDecoder
     , feedbackFormValidation
     , feedbackListDecoder
@@ -19,6 +22,10 @@ module Common.Questionnaire.Models exposing
     , setActiveChapter
     , setLevel
     , updateReplies
+    , findQuestionFlagAtPath
+    , getReply
+    --
+    , createChapterForm
     )
 
 import ActionResult exposing (ActionResult(..))
@@ -39,6 +46,7 @@ import List.Extra as List
 import Questionnaires.Common.Models.QuestionnaireAccessibility as QuestionnaireAccessibility exposing (QuestionnaireAccessibility)
 import String exposing (fromInt)
 import Utils exposing (boolToInt)
+import Json.Encode as Encode
 
 
 type alias Model =
@@ -104,6 +112,7 @@ type alias QuestionnaireDetail =
     , level : Int
     , accessibility : QuestionnaireAccessibility
     , ownerUuid : Maybe String
+    , questionFlags : List QuestionFlags
     }
 
 
@@ -118,6 +127,7 @@ questionnaireDetailDecoder =
         |> required "level" Decode.int
         |> required "accessibility" QuestionnaireAccessibility.decoder
         |> required "ownerUuid" (Decode.maybe Decode.string)
+        |> required "questionFlags" questionFlagListDecoder
 
 
 encodeQuestionnaireDetail : QuestionnaireDetail -> Encode.Value
@@ -129,6 +139,25 @@ encodeQuestionnaireDetail questionnaire =
         , ( "level", Encode.int questionnaire.level )
         ]
 
+
+type alias QuestionFlags =
+    { questionPath : List String
+    , flagTypes : List QuestionFlagType
+    }
+
+
+type QuestionFlagType
+    = NeedsReview
+    | MigrationResolved
+
+
+findQuestionFlagAtPath : List QuestionFlags -> List String -> Maybe QuestionFlags
+findQuestionFlagAtPath flags path =
+    let
+        containsPath flag =
+            flag.questionPath == path
+    in
+    List.find containsPath flags
 
 type alias FeedbackForm =
     { title : String
@@ -158,6 +187,23 @@ encodeFeedbackFrom questionUuid packageId form =
         ]
 
 
+encodeQuestionFlag : QuestionFlags -> Encode.Value
+encodeQuestionFlag flag =
+    Encode.object
+        [ ( "questionPath", Encode.list Encode.string flag.questionPath )
+        , ( "flagTypes", Encode.list encodeQuestionFlagType flag.flagTypes )
+        ]
+
+
+encodeQuestionFlagType : QuestionFlagType -> Encode.Value
+encodeQuestionFlagType flagType =
+    case flagType of
+        NeedsReview ->
+            Encode.string "NeedsReview"
+        MigrationResolved ->
+            Encode.string "MigrationResolved"
+
+
 type alias Feedback =
     { title : String
     , issueId : Int
@@ -176,6 +222,35 @@ feedbackDecoder =
 feedbackListDecoder : Decoder (List Feedback)
 feedbackListDecoder =
     Decode.list feedbackDecoder
+
+
+questionFlagDecoder : Decoder QuestionFlags
+questionFlagDecoder =
+    Decode.succeed QuestionFlags
+        |> required "questionPath" (Decode.list Decode.string)
+        |> required "flagTypes" ( Decode.list flagTypeDecoder)
+
+
+questionFlagListDecoder : Decoder (List QuestionFlags)
+questionFlagListDecoder =
+    Decode.list questionFlagDecoder
+
+
+flagTypeDecoder : Decoder QuestionFlagType
+flagTypeDecoder =
+    Decode.string
+        |> Decode.andThen
+            (\str ->
+                case str of
+                    "NeedsReview" ->
+                        Decode.succeed NeedsReview
+
+                    "MigrationResolved" ->
+                        Decode.succeed MigrationResolved
+
+                    unknownState ->
+                        Decode.fail <| "Unknown question flag " ++ unknownState
+            )
 
 
 

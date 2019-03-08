@@ -6,6 +6,7 @@ import Questionnaires.Create.Update
 import Questionnaires.Detail.Update
 import Questionnaires.Edit.Update
 import Questionnaires.Index.Update
+import Questionnaires.Migration.Update
 import Questionnaires.Models exposing (Model)
 import Questionnaires.Msgs exposing (Msg(..))
 import Questionnaires.Routing exposing (Route(..))
@@ -25,6 +26,9 @@ fetchData route wrapMsg appState model =
 
         Index ->
             Questionnaires.Index.Update.fetchData (wrapMsg << IndexMsg) appState
+
+        Migrate uuid ->
+            Questionnaires.Migration.Update.fetchData (wrapMsg << MigrationMsg) appState uuid
 
 
 update : Msg -> (Msg -> Msgs.Msg) -> AppState -> Model -> ( Model, Cmd Msgs.Msg )
@@ -57,3 +61,10 @@ update msg wrapMsg appState model =
                     Questionnaires.Index.Update.update iMsg (wrapMsg << IndexMsg) appState model.indexModel
             in
             ( { model | indexModel = indexModel }, cmd )
+
+        MigrationMsg mMsg ->
+            let
+                ( migrationModel, cmd ) =
+                    Questionnaires.Migration.Update.update mMsg (wrapMsg << MigrationMsg) appState model.migrationModel
+            in
+            ( { model | migrationModel = migrationModel }, cmd)

@@ -100,4 +100,5 @@ createQuestionnaireModel appState packageId km =
         , knowledgeModel = km
         , replies = []
         , level = 0
+        , questionFlags = []
         }

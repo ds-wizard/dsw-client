@@ -5,6 +5,7 @@ import KMEditor.Subscriptions
 import KnowledgeModels.Subscriptions
 import Models exposing (Model)
 import Msgs exposing (Msg(..))
+import Questionnaires.Subscriptions
 import Routing exposing (Route(..))
 
 
@@ -18,6 +19,9 @@ subscriptions model =
 
                 KnowledgeModels route ->
                     KnowledgeModels.Subscriptions.subscriptions KnowledgeModelsMsg route model.kmPackagesModel
+
+                Questionnaires route ->
+                    Questionnaires.Subscriptions.subscriptions QuestionnairesMsg route model.dsPlannerModel
 
                 _ ->
                     Sub.none
