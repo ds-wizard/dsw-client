@@ -120,6 +120,27 @@ listingActions wrapMsg appState questionnaire =
             , msg = ListingActionMsg (wrapMsg <| ShowExportQuestionnaire questionnaire)
             }
 
+        upgrade =
+            { extraClass = Nothing
+            , icon = Just "angle-double-up"
+            , label = "Upgrade"
+            , msg = ListingActionMsg (wrapMsg <| ShowHideQuestionnaireUpgradeForm (Just questionnaire))
+            }
+
+        continueMigration =
+            { extraClass = Just "font-weight-bold"
+            , icon = Nothing
+            , label = "Continue Migration"
+            , msg = ListingActionLink (Routing.Questionnaires <| Migrate <| questionnaire.uuid)
+            }
+
+        cancelMigration =
+            { extraClass = Nothing
+            , icon = Just "ban"
+            , label = "Cancel Migration"
+            , msg = ListingActionMsg (wrapMsg <| DeleteQuestionnaireMigration questionnaire.uuid)
+            }
+
         edit =
             { extraClass = Nothing
             , icon = Just "edit"
@@ -136,12 +157,21 @@ listingActions wrapMsg appState questionnaire =
 
         editable =
             isEditable appState questionnaire
+
+        migrating =
+            questionnaire.state == Migrating
+
+        outdated =
+            questionnaire.state == Outdated        
     in
     []
-        |> listInsertIf fillQuestionnaire editable
+        |> listInsertIf fillQuestionnaire (editable && (not migrating))
         |> listInsertIf viewQuestionnaire (not editable)
+        |> listInsertIf continueMigration migrating
+        |> listInsertIf cancelMigration migrating
         |> listInsertIf export_ True
-        |> listInsertIf edit editable
+        |> listInsertIf upgrade outdated
+        |> listInsertIf edit (editable && (not migrating))
         |> listInsertIf delete editable
 
 
