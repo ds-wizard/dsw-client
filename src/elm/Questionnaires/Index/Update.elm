@@ -177,7 +177,7 @@ handlePostQuestionnaireMigrationCompleted wrapMsg appState result model =
                         |> Maybe.andThen (Just << .uuid)
                         |> Maybe.withDefault ""
             in
-            ( model, cmdNavigate appState.key <| Routing.Questionnaires << Migrate <| questionnaireUuid )
+            ( model, cmdNavigate appState.key <| Routing.Questionnaires << Migration <| questionnaireUuid )
 
         Err error ->
             ( { model | creatingQuestionnaireMigration = getServerError error "Questionnaire migration could not be created." }

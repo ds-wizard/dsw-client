@@ -28,5 +28,5 @@ view route wrapMsg appState model =
         Index ->
             Questionnaires.Index.View.view (wrapMsg << IndexMsg) appState model.indexModel
 
-        Migrate uuid ->
+        Migration uuid ->
             Questionnaires.Migration.View.view (wrapMsg << MigrationMsg) model.migrationModel

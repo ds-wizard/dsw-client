@@ -131,7 +131,7 @@ listingActions wrapMsg appState questionnaire =
             { extraClass = Just "font-weight-bold"
             , icon = Nothing
             , label = "Continue Migration"
-            , msg = ListingActionLink (Routing.Questionnaires <| Migrate <| questionnaire.uuid)
+            , msg = ListingActionLink (Routing.Questionnaires <| Migration <| questionnaire.uuid)
             }
 
         cancelMigration =
@@ -166,12 +166,12 @@ listingActions wrapMsg appState questionnaire =
     in
     []
         |> listInsertIf fillQuestionnaire (editable && not migrating)
-        |> listInsertIf viewQuestionnaire (not editable)
+        |> listInsertIf viewQuestionnaire (not editable && not migrating)
         |> listInsertIf continueMigration migrating
         |> listInsertIf cancelMigration migrating
         |> listInsertIf export_ True
         |> listInsertIf upgrade outdated
-        |> listInsertIf edit (editable && not migrating)
+        |> listInsertIf edit editable
         |> listInsertIf delete editable
 
 

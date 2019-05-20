@@ -42,5 +42,5 @@ initLocalModel route model =
         Index ->
             { model | indexModel = Questionnaires.Index.Models.initialModel }
 
-        Migrate _ ->
+        Migration _ ->
             { model | indexModel = Questionnaires.Index.Models.initialModel }

@@ -27,7 +27,7 @@ fetchData route wrapMsg appState model =
         Index ->
             Questionnaires.Index.Update.fetchData (wrapMsg << IndexMsg) appState
 
-        Migrate uuid ->
+        Migration uuid ->
             Questionnaires.Migration.Update.fetchData (wrapMsg << MigrationMsg) appState uuid
 
 
