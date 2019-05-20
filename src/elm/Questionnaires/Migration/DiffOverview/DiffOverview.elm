@@ -5,7 +5,7 @@ import Common.Html exposing (emptyNode)
 import Common.Questionnaire.Models exposing (QuestionFlags, QuestionFlagType(..), findQuestionFlagAtPath, getReply)
 import Dict
 import Diff
-import FormEngine.Model exposing (FormValues, ReplyValue(..))
+import FormEngine.Model exposing (FormValues, ReplyValue(..), IntegrationReplyValue(..))
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
@@ -182,7 +182,7 @@ questionDiffOverview data node replies diffTree =
                     questionStringReplyPreview reply
 
                 IntegrationQuestion _ ->
-                    Debug.todo ""
+                    questionIntegrationReplyPreview reply
     in
     div [ class "question-diff" ]
         [ h5 [] [ text "Question title" ]
@@ -212,6 +212,26 @@ questionStringReplyPreview reply =
                 Just (StringReply string) ->
                     input [ disabled True, value string] []
 
+                Nothing ->
+                    questionNoReplyPreview
+
+                _ ->
+                    cannotMigrateQuestionReplyText
+    in
+    div [] [ content ]
+
+
+questionIntegrationReplyPreview : Maybe ReplyValue -> Html msg
+questionIntegrationReplyPreview reply =
+    let
+        content =
+            case reply of
+                Just (IntegrationReply (PlainValue string)) ->
+                    input [ disabled True, value string ] []
+
+                Just (IntegrationReply (IntegrationValue _ string)) ->
+                    input [ disabled True, value string ] []
+                
                 Nothing ->
                     questionNoReplyPreview
 
