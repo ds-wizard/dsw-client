@@ -1,19 +1,16 @@
-module Questionnaires.Migration.DiffTree.DiffTree exposing
-    ( view
-    )
+module Questionnaires.Migration.DiffTree.DiffTree exposing (view)
 
+import Common.Html exposing (emptyNode, fa)
 import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
-import Common.Html exposing (emptyNode, fa)
-import Questionnaires.Migration.Msgs exposing (Msg(..))
-import Questionnaires.Migration.Models exposing (Model, TreeNode, TreeNodeType(..), DiffState(..), ExpansionState(..))
-import Questionnaires.Common.Models exposing (QuestionnaireMigration)
-import KMEditor.Common.Models.Entities exposing (KnowledgeModel, Chapter, Question, Answer, FollowUps(..), getQuestionUuid, getQuestionTitle, getQuestionAnswers)
+import KMEditor.Common.Models.Entities exposing (Answer, Chapter, FollowUps(..), KnowledgeModel, Question, getQuestionAnswers, getQuestionTitle, getQuestionUuid)
 import KMEditor.Common.Models.Events exposing (Event(..), getEventEntityUuid)
-
 import Msgs
+import Questionnaires.Common.Models exposing (QuestionnaireMigration)
+import Questionnaires.Migration.Models exposing (DiffState(..), ExpansionState(..), Model, TreeNode, TreeNodeType(..))
+import Questionnaires.Migration.Msgs exposing (Msg(..))
 
 
 view : String -> String -> Dict.Dict String TreeNode -> Dict.Dict String DiffState -> Html Msg
@@ -36,13 +33,14 @@ treeNodeView activeUuid nodes diffStates rootUuid =
         Just node ->
             let
                 ( hasActiveChild, children ) =
-                        List.map (treeNodeView activeUuid nodes diffStates) node.children
-                            |> foldTreeChildNodesWithActiveIndication
-                            |> Tuple.mapSecond (ul [])
+                    List.map (treeNodeView activeUuid nodes diffStates) node.children
+                        |> foldTreeChildNodesWithActiveIndication
+                        |> Tuple.mapSecond (ul [])
 
                 stateCaret =
                     if not <| List.isEmpty node.children then
                         caret (ToggleDiffTreeNode rootUuid) node.expansionState hasActiveChild
+
                     else
                         emptyNode
 
@@ -71,7 +69,11 @@ treeNodeView activeUuid nodes diffStates rootUuid =
                         ]
                         [ stateCaret
                         , action
-                        , if node.expansionState == Expanded then children else emptyNode
+                        , if node.expansionState == Expanded then
+                            children
+
+                          else
+                            emptyNode
                         ]
             in
             ( hasActiveChild || rootUuid == activeUuid, treeNode )
@@ -80,7 +82,7 @@ treeNodeView activeUuid nodes diffStates rootUuid =
             ( False, emptyNode )
 
 
-foldTreeChildNodesWithActiveIndication : List ( Bool, Html msg ) -> ( Bool, List (Html msg ) )
+foldTreeChildNodesWithActiveIndication : List ( Bool, Html msg ) -> ( Bool, List (Html msg) )
 foldTreeChildNodesWithActiveIndication items =
     let
         hasActiveChild =
@@ -89,7 +91,8 @@ foldTreeChildNodesWithActiveIndication items =
         children =
             List.map Tuple.second items
     in
-        ( hasActiveChild, children )
+    ( hasActiveChild, children )
+
 
 nodeTypeIcon : TreeNodeType -> String
 nodeTypeIcon nodeType =
@@ -124,7 +127,8 @@ diffStateClassAttribute state =
                 Removed _ ->
                     "state-removed"
 
-                Created _ -> "state-added"
+                Created _ ->
+                    "state-added"
     in
     class stateClass
 

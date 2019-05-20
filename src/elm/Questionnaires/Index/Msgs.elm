@@ -2,9 +2,9 @@ module Questionnaires.Index.Msgs exposing (Msg(..))
 
 import Common.ApiError exposing (ApiError)
 import Form
+import KnowledgeModels.Common.Models exposing (PackageDetail)
 import Questionnaires.Common.Models exposing (Questionnaire)
 import Questionnaires.Index.ExportModal.Msgs as ExportModal
-import KnowledgeModels.Common.Models exposing (PackageDetail)
 
 
 type Msg

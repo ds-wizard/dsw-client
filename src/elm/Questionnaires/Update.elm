@@ -67,4 +67,4 @@ update msg wrapMsg appState model =
                 ( migrationModel, cmd ) =
                     Questionnaires.Migration.Update.update mMsg (wrapMsg << MigrationMsg) appState model.migrationModel
             in
-            ( { model | migrationModel = migrationModel }, cmd)
+            ( { model | migrationModel = migrationModel }, cmd )

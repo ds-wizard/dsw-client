@@ -1,38 +1,38 @@
 module Questionnaires.Migration.Models exposing
-    ( Model
-    , initialModel
-    , DiffState(..)
-    , DiffNode(..)
-    , KnowledgeModelDiffNodeData
+    ( AnswerDiffNodeData
     , ChapterDiffNodeData
+    , DiffNode(..)
+    , DiffState(..)
+    , ExpansionState(..)
+    , KnowledgeModelDiffNodeData
+    , Model
+    , NodeUuids
     , QuestionDiffNodeData
-    , AnswerDiffNodeData
     , StringDiff
     , TreeNode
     , TreeNodeType(..)
-    , ExpansionState(..)
-    , NodeUuids
-    , stateNodes
-    , getNodeUuid
     , getDiffStateUuid
-    , hasPreviousDiffEvent
-    , hasFollowingDiffEvent
+    , getNodeUuid
     , getParentQuestionPathForUuid
+    , hasFollowingDiffEvent
+    , hasPreviousDiffEvent
+    , initialModel
     , isUnchangedState
+    , stateNodes
     , stringifyPath
     )
 
-import Diff
-import Dict exposing (Dict)
 import ActionResult exposing (ActionResult(..))
-import SplitPane exposing (Orientation(..), configureSplitter, percentage)
-import FormEngine.Model exposing (ReplyValue)
-import Questionnaires.Common.Models exposing (QuestionnaireMigration)
 import Common.Questionnaire.Models exposing (QuestionFlags)
-import KMEditor.Common.Models.Entities exposing (KnowledgeModel, Chapter, Question, Answer, FollowUps(..), getQuestionUuid, getQuestionTitle, getQuestionAnswers)
+import Dict exposing (Dict)
+import Diff
+import FormEngine.Model exposing (ReplyValue)
+import KMEditor.Common.Models.Entities exposing (Answer, Chapter, FollowUps(..), KnowledgeModel, Question, getQuestionAnswers, getQuestionTitle, getQuestionUuid)
 import KMEditor.Common.Models.Events exposing (Event(..), getEventEntityUuid)
 import KMEditor.Common.Models.Path as Path
 import List.Extra
+import Questionnaires.Common.Models exposing (QuestionnaireMigration)
+import SplitPane exposing (Orientation(..), configureSplitter, percentage)
 
 
 type alias Model =
@@ -83,6 +83,7 @@ type alias QuestionDiffNodeData =
     , question : Question
     }
 
+
 type alias AnswerDiffNodeData =
     { uuid : String
     , label : StringDiff
@@ -121,7 +122,8 @@ type alias NodeUuids =
     }
 
 
-type alias StringDiff = List (Diff.Change String)
+type alias StringDiff =
+    List (Diff.Change String)
 
 
 initialModel : Model
@@ -158,18 +160,30 @@ diffStrings l r =
 mapChange : (a -> b) -> Diff.Change a -> Diff.Change b
 mapChange f change =
     case change of
-        Diff.Added c -> Diff.Added <| f c
-        Diff.Removed c -> Diff.Removed <| f c
-        Diff.NoChange c -> Diff.NoChange <| f c
+        Diff.Added c ->
+            Diff.Added <| f c
+
+        Diff.Removed c ->
+            Diff.Removed <| f c
+
+        Diff.NoChange c ->
+            Diff.NoChange <| f c
 
 
 stateNodes : DiffState -> ( Maybe DiffNode, Maybe DiffNode )
 stateNodes state =
     case state of
-        Created node -> ( Nothing, Just node )
-        Removed node -> ( Just node, Nothing )
-        Unchanged node -> ( Just node, Just node )
-        Modified oldNode newNode -> ( Just oldNode, Just newNode )
+        Created node ->
+            ( Nothing, Just node )
+
+        Removed node ->
+            ( Just node, Nothing )
+
+        Unchanged node ->
+            ( Just node, Just node )
+
+        Modified oldNode newNode ->
+            ( Just oldNode, Just newNode )
 
 
 getNodeUuid : DiffNode -> String
@@ -197,7 +211,7 @@ hasFollowingDiffEvent model uuid =
         isLastEvent =
             isLast uuid model.diffEventsUuids
     in
-    isMember && (not isLastEvent)
+    isMember && not isLastEvent
 
 
 hasPreviousDiffEvent : Model -> NodeUuids -> Bool
@@ -209,7 +223,7 @@ hasPreviousDiffEvent model uuid =
         isFirstEvent =
             isFirst uuid model.diffEventsUuids
     in
-    isMember && (not isFirstEvent)
+    isMember && not isFirstEvent
 
 
 isFirst : a -> List a -> Bool
@@ -220,6 +234,7 @@ isFirst element list =
 
         Nothing ->
             False
+
 
 isLast : a -> List a -> Bool
 isLast element list =
@@ -260,7 +275,8 @@ getDiffStateUuid state =
 initialSplitPaneState : SplitPane.State
 initialSplitPaneState =
     SplitPane.init Horizontal
-        |> configureSplitter (percentage 0.2 (Just (0.05, 0.7)))
+        |> configureSplitter (percentage 0.2 (Just ( 0.05, 0.7 )))
+
 
 getParentQuestionPathForUuid : String -> Dict.Dict String TreeNode -> Maybe (List String)
 getParentQuestionPathForUuid uuid diffTree =

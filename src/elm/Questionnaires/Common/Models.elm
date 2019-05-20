@@ -8,14 +8,13 @@ module Questionnaires.Common.Models exposing
     , questionnaireMigrationDecoder
     )
 
-
 import Auth.Role as Role
 import Common.AppState exposing (AppState)
+import Common.Questionnaire.Models exposing (QuestionnaireDetail, questionnaireDetailDecoder)
 import Json.Decode as Decode exposing (..)
 import Json.Decode.Pipeline exposing (optional, required)
-import Common.Questionnaire.Models exposing (QuestionnaireDetail, questionnaireDetailDecoder)
-import KMEditor.Common.Models.Events exposing (Event, eventDecoder)
 import KMEditor.Common.Models.Entities exposing (KnowledgeModel, knowledgeModelDecoder)
+import KMEditor.Common.Models.Events exposing (Event, eventDecoder)
 import KnowledgeModels.Common.Models exposing (PackageDetail, packageDetailDecoder)
 import Questionnaires.Common.Models.QuestionnaireAccessibility as QuestionnaireAccessibility exposing (QuestionnaireAccessibility(..))
 

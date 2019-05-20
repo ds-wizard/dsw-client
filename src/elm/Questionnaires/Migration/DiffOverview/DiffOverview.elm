@@ -1,18 +1,18 @@
-module Questionnaires.Migration.DiffOverview.DiffOverview exposing ( view )
+module Questionnaires.Migration.DiffOverview.DiffOverview exposing (view)
 
 import Common.AppState exposing (AppState)
 import Common.Html exposing (emptyNode)
-import Common.Questionnaire.Models exposing (QuestionFlags, QuestionFlagType(..), findQuestionFlagAtPath, getReply)
+import Common.Questionnaire.Models exposing (QuestionFlagType(..), QuestionFlags, findQuestionFlagAtPath, getReply)
 import Dict
 import Diff
-import FormEngine.Model exposing (FormValues, ReplyValue(..), IntegrationReplyValue(..))
+import FormEngine.Model exposing (FormValues, IntegrationReplyValue(..), ReplyValue(..))
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
+import KMEditor.Common.Models.Entities exposing (Answer, Question(..), getQuestionAnswers)
 import Questionnaires.Common.Models exposing (QuestionnaireMigration)
-import Questionnaires.Migration.Models exposing (Model, TreeNode, DiffState (..), DiffNode(..), KnowledgeModelDiffNodeData, ChapterDiffNodeData, QuestionDiffNodeData, AnswerDiffNodeData, NodeUuids, stateNodes, getParentQuestionPathForUuid, isUnchangedState, stringifyPath)
+import Questionnaires.Migration.Models exposing (AnswerDiffNodeData, ChapterDiffNodeData, DiffNode(..), DiffState(..), KnowledgeModelDiffNodeData, Model, NodeUuids, QuestionDiffNodeData, TreeNode, getParentQuestionPathForUuid, isUnchangedState, stateNodes, stringifyPath)
 import Questionnaires.Migration.Msgs exposing (Msg(..))
-import KMEditor.Common.Models.Entities exposing (Question(..), Answer, getQuestionAnswers)
 
 
 view : String -> DiffState -> TreeNode -> FormValues -> Dict.Dict String TreeNode -> List QuestionFlags -> Html Msg
@@ -34,22 +34,25 @@ view questionnaireUuid state treeNode replies diffTree flags =
                 |> Maybe.withDefault []
 
         stateControls =
-            case (questionPath, isUnchanged) of
-                (Just path, False) ->
+            case ( questionPath, isUnchanged ) of
+                ( Just path, False ) ->
                     if List.isEmpty flagTypes then
                         diffStateControls questionnaireUuid path
+
                     else
                         undoStateControl flagTypes (DeleteMigrationChange questionnaireUuid path)
+
                 _ ->
                     emptyNode
     in
     div [ class "col DiffOverview mt-4" ]
-    [ div [ class "row mb-5"]
-        [ diffOverviewView "Current version" treeNode oldNode replies diffTree
-        , diffOverviewView "New version" treeNode newNode replies diffTree
+        [ div [ class "row mb-5" ]
+            [ diffOverviewView "Current version" treeNode oldNode replies diffTree
+            , diffOverviewView "New version" treeNode newNode replies diffTree
+            ]
+        , stateControls
         ]
-    , stateControls
-    ]
+
 
 
 -- Navigation
@@ -65,6 +68,7 @@ stateControlsContaier content =
             ]
         ]
 
+
 diffStateControls : String -> List String -> Html Msg
 diffStateControls questionnaireUuid questionPath =
     let
@@ -74,12 +78,12 @@ diffStateControls questionnaireUuid questionPath =
         resolvedMsg =
             SetMigrationChangeAsResolved questionnaireUuid questionPath
     in
-    stateControlsContaier
-        <| [ p [] [ text "There appears to be changes which might affect your answer. Do you want to review the question later?" ]
-           , button [ class "btn ml-auto mr-2", class "btn-outline-secondary", onClick needsReviewMsg ] [ text "Review later" ]
-           , button [ class "btn btn-outline-success", class "btn-outline-secondary", onClick resolvedMsg ] [ text "It's OK" ]
-           ]
-    
+    stateControlsContaier <|
+        [ p [] [ text "There appears to be changes which might affect your answer. Do you want to review the question later?" ]
+        , button [ class "btn ml-auto mr-2", class "btn-outline-secondary", onClick needsReviewMsg ] [ text "Review later" ]
+        , button [ class "btn btn-outline-success", class "btn-outline-secondary", onClick resolvedMsg ] [ text "It's OK" ]
+        ]
+
 
 undoStateControl : List QuestionFlagType -> Msg -> Html Msg
 undoStateControl flagTypes clickAction =
@@ -90,17 +94,19 @@ undoStateControl flagTypes clickAction =
         intro =
             if isNeedsReview then
                 "This item is marked for later review."
+
             else
                 "This item was already reviewed and you will not be reminded of it after the migration is completed."
     in
-     stateControlsContaier
-        <| [ p []
-                [ text intro
-                , text " Changed yor mind? You can "
-                , button [ class "p-0 btn btn-link", onClick clickAction ] [ text "undo this action" ]
-                , text "."
-                ]
-           ]
+    stateControlsContaier <|
+        [ p []
+            [ text intro
+            , text " Changed yor mind? You can "
+            , button [ class "p-0 btn btn-link", onClick clickAction ] [ text "undo this action" ]
+            , text "."
+            ]
+        ]
+
 
 
 -- Diff tree
@@ -120,7 +126,7 @@ diffOverviewView title treeNode diffNode replies diffTree =
     div [ class "col-md-6 diff-overview" ]
         [ h3 [] [ text title ]
         , div [ class "card" ]
-            [ div [ class "card-body"]
+            [ div [ class "card-body" ]
                 [ content
                 ]
             ]
@@ -146,7 +152,7 @@ diffOverviewContent diffNode treeNode replies diffTree =
 knowledgeModelDiffOverview : KnowledgeModelDiffNodeData -> Html msg
 knowledgeModelDiffOverview data =
     div [ class "knowledgemodel-diff" ]
-        [ h5 [] [ text "KnowledgeModel name"]
+        [ h5 [] [ text "KnowledgeModel name" ]
         , render data.name
         ]
 
@@ -197,7 +203,7 @@ questionDiffOverview data node replies diffTree =
 answerDiffOverview : AnswerDiffNodeData -> Html msg
 answerDiffOverview data =
     div [ class "answer-diff" ]
-        [ h5 [] [ text "Answer title"]
+        [ h5 [] [ text "Answer title" ]
         , render data.label
         , h5 [] [ text "Answer text" ]
         , render data.advice
@@ -210,7 +216,7 @@ questionStringReplyPreview reply =
         content =
             case reply of
                 Just (StringReply string) ->
-                    input [ disabled True, value string] []
+                    input [ disabled True, value string ] []
 
                 Nothing ->
                     questionNoReplyPreview
@@ -231,7 +237,7 @@ questionIntegrationReplyPreview reply =
 
                 Just (IntegrationReply (IntegrationValue _ string)) ->
                     input [ disabled True, value string ] []
-                
+
                 Nothing ->
                     questionNoReplyPreview
 
@@ -283,6 +289,7 @@ questionAnswerReplyPreview question reply =
         _ ->
             cannotMigrateQuestionReplyText
 
+
 questionAnswerReplyOptionPreview : String -> Answer -> Html msg
 questionAnswerReplyOptionPreview selectedUuid answer =
     let
@@ -298,6 +305,7 @@ questionAnswerReplyOptionPreview selectedUuid answer =
             ]
         ]
 
+
 questionNoReplyPreview : Html msg
 questionNoReplyPreview =
     div []
@@ -310,7 +318,9 @@ cannotMigrateQuestionReplyText =
     text "Reply for this question can not be migrated. Mark question as 'Needs review' if you want to be notified after migration."
 
 
+
 -- Diff views
+
 
 render : List (Diff.Change String) -> Html msg
 render =
@@ -320,9 +330,14 @@ render =
 renderChange : Diff.Change String -> Html msg
 renderChange change =
     case change of
-        Diff.Added s -> span [ class "state-added" ] [ text s ]
-        Diff.Removed s -> span [ class "state-removed" ] [ text s ]
-        Diff.NoChange s -> span [ class "state-unchanged" ] [ text s ]
+        Diff.Added s ->
+            span [ class "state-added" ] [ text s ]
+
+        Diff.Removed s ->
+            span [ class "state-removed" ] [ text s ]
+
+        Diff.NoChange s ->
+            span [ class "state-unchanged" ] [ text s ]
 
 
 knowledgeModelDiffView : String -> Html msg
@@ -336,12 +351,18 @@ knowledgeModelDiffView name =
 changeRemoved : Diff.Change a -> Bool
 changeRemoved change =
     case change of
-        Diff.Removed _ -> True
-        _         -> False
+        Diff.Removed _ ->
+            True
+
+        _ ->
+            False
 
 
 changeAdded : Diff.Change a -> Bool
 changeAdded change =
     case change of
-        Diff.Added _ -> True
-        _       -> False
+        Diff.Added _ ->
+            True
+
+        _ ->
+            False

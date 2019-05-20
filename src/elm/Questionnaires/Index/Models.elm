@@ -1,14 +1,14 @@
-module Questionnaires.Index.Models exposing (Model, QuestionnaireRow, QuestionnaireUpgradeForm, initQuestionnaireRow, initialModel, encodeQuestionnaireUpgradeForm, questionnaireUpgradeFormValidation)
+module Questionnaires.Index.Models exposing (Model, QuestionnaireRow, QuestionnaireUpgradeForm, encodeQuestionnaireUpgradeForm, initQuestionnaireRow, initialModel, questionnaireUpgradeFormValidation)
 
 import ActionResult exposing (ActionResult(..))
 import Bootstrap.Dropdown as Dropdown
+import Common.Form exposing (CustomFormError)
 import Form exposing (Form)
 import Form.Validate as Validate exposing (..)
-import Common.Form exposing (CustomFormError)
 import Json.Encode as Encode exposing (..)
+import KnowledgeModels.Common.Models exposing (PackageDetail)
 import Questionnaires.Common.Models exposing (Questionnaire)
 import Questionnaires.Index.ExportModal.Models as ExportModal
-import KnowledgeModels.Common.Models exposing (PackageDetail)
 
 
 type alias Model =
@@ -43,6 +43,7 @@ type alias QuestionnaireRow =
     , questionnaire : Questionnaire
     }
 
+
 type alias QuestionnaireUpgradeForm =
     { targetPackageId : String
     }
@@ -52,16 +53,19 @@ initQuestionnaireRow : Questionnaire -> QuestionnaireRow
 initQuestionnaireRow =
     QuestionnaireRow Dropdown.initialState
 
+
 initQuestionnaireUpgradeForm : Form CustomFormError QuestionnaireUpgradeForm
 initQuestionnaireUpgradeForm =
     Form.initial [] questionnaireUpgradeFormValidation
+
 
 questionnaireUpgradeFormValidation : Validation CustomFormError QuestionnaireUpgradeForm
 questionnaireUpgradeFormValidation =
     Validate.map QuestionnaireUpgradeForm
         (Validate.field "targetPackageId" Validate.string)
 
+
 encodeQuestionnaireUpgradeForm : QuestionnaireUpgradeForm -> Encode.Value
 encodeQuestionnaireUpgradeForm form =
     Encode.object
-        [ ( "targetPackageId", Encode.string form.targetPackageId )]
+        [ ( "targetPackageId", Encode.string form.targetPackageId ) ]

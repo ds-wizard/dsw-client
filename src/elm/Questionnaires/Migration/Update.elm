@@ -1,23 +1,23 @@
-module Questionnaires.Migration.Update exposing (..)
+module Questionnaires.Migration.Update exposing (appendUnchagnedChapterNodes, appendUnchangedAnswerNodes, appendUnchangedKnowledgeModelNodes, appendUnchangedQuestionNodes, convertDiffEventToDiffState, createAnswerCreatedState, createAnswerDeletedState, createAnswerDiffSubTree, createAnswerModifiedState, createAnswerUnchangedState, createChapterCreatedState, createChapterDiffSubTree, createChapterModifiedState, createChapterRemovedState, createChapterUnchangedState, createDiffEventUuids, createDiffTree, createKnowledgeModelCreatedState, createKnowledgeModelModifiedState, createKnowledgeModelUnchangedState, createListItemQuestionDiffSubTree, createQuestionCreatedState, createQuestionDiffSubTree, createQuestionDiffSubTreeAtKey, createQuestionModifiedState, createQuestionRemovedState, createQuestionUnchangedState, diffStrings, dummyAnswer, dummyChapter, dummyQuestion, fetchData, findAnswerByUuid, findChapterByUuid, findQuestionByUuid, findQuestionReply, getChapterQuestions, getFollowUpQuestions, getKnowledgeModelAnswers, getKnowledgeModelQuestions, handleDeleteMigrationChange, handleDeleteMigrationChangeCompleted, handleGetQuestionnaireMigrationCompleted, handleMigrateQuestionnaire, handleMigrateQuestionnaireCompleted, handleNextDiffEvent, handleSelectDiffTreeNode, handleSetMigrationChangeAsNeedsReview, handleSetMigrationChangeAsResolved, handleSetMigrationQuestionFlag, handleSettingMigrationChangeCompleted, handleShowPreviousDiffEvent, handleToggleDiffTreeNode, insertDiffStateIfNotExists, mapDiffChange, newNodeDiffChanges, oldNodeDiffChanges, toggleDiffTreeNodeExpansionStateByUuid, toggleExpansionState, unwrapWithNestedQuestions, update)
 
 import ActionResult exposing (ActionResult(..))
 import Common.Api exposing (getResultCmd)
 import Common.Api.Questionnaires as QuestionnairesApi
 import Common.ApiError exposing (ApiError, getServerError)
 import Common.AppState exposing (AppState)
-import Common.Questionnaire.Models exposing (QuestionFlags, QuestionFlagType(..), encodeQuestionFlag, getReply)
+import Common.Questionnaire.Models exposing (QuestionFlagType(..), QuestionFlags, encodeQuestionFlag, getReply)
 import Dict exposing (Dict)
 import Diff
 import FormEngine.Model exposing (FormValues, ReplyValue(..), getAnswerUuid, getStringReply)
-import KMEditor.Common.Models.Entities exposing (KnowledgeModel, Chapter, Question(..), Answer, FollowUps(..), getQuestionUuid, getQuestionTitle, getQuestionText, getQuestionItemQuestions, getQuestionAnswers)
+import KMEditor.Common.Models.Entities exposing (Answer, Chapter, FollowUps(..), KnowledgeModel, Question(..), getQuestionAnswers, getQuestionItemQuestions, getQuestionText, getQuestionTitle, getQuestionUuid)
 import KMEditor.Common.Models.Events exposing (Event(..), getAddQuestionUuid, getEditQuestionUuid)
 import KMEditor.Common.Models.Path exposing (Path, PathNode(..), getNodeUuid)
-import List.Extra exposing (find, andThen, getAt, elemIndex)
+import List.Extra exposing (andThen, elemIndex, find, getAt)
 import Msgs
 import Questionnaires.Common.Models exposing (QuestionnaireMigration)
-import Questionnaires.Migration.DiffTree.DiffTree as DiffTree
 import Questionnaires.Migration.DiffOverview.DiffOverview as DiffOverview
-import Questionnaires.Migration.Models exposing (Model, TreeNode, ExpansionState(..), TreeNodeType(..), DiffState(..), DiffNode(..), KnowledgeModelDiffNodeData, ChapterDiffNodeData, QuestionDiffNodeData, NodeUuids, getDiffStateUuid, stringifyPath)
+import Questionnaires.Migration.DiffTree.DiffTree as DiffTree
+import Questionnaires.Migration.Models exposing (ChapterDiffNodeData, DiffNode(..), DiffState(..), ExpansionState(..), KnowledgeModelDiffNodeData, Model, NodeUuids, QuestionDiffNodeData, TreeNode, TreeNodeType(..), getDiffStateUuid, stringifyPath)
 import Questionnaires.Migration.Msgs exposing (Msg(..))
 import Questionnaires.Routing exposing (Route(..))
 import Routing
@@ -26,8 +26,8 @@ import SplitPane
 
 fetchData : (Msg -> Msgs.Msg) -> AppState -> String -> Cmd Msgs.Msg
 fetchData wrapMsg appState uuid =
-    Cmd.map wrapMsg
-        <| QuestionnairesApi.getQuestionnaireMigration uuid appState GetQuestionnaireMigrationCompleted
+    Cmd.map wrapMsg <|
+        QuestionnairesApi.getQuestionnaireMigration uuid appState GetQuestionnaireMigrationCompleted
 
 
 update : Msg -> (Msg -> Msgs.Msg) -> AppState -> Model -> ( Model, Cmd Msgs.Msg )
@@ -104,16 +104,16 @@ handleGetQuestionnaireMigrationCompleted model result =
                 activeNode =
                     List.head diffEventsUuids
                         |> Maybe.withDefault
-                            { treeUuid =  diffKnowledgeModel.uuid
+                            { treeUuid = diffKnowledgeModel.uuid
                             , diffStateUuid = diffKnowledgeModel.uuid
                             }
             in
             ( { model
-              | questionnaireMigration = Success questionnaireMigration
-              , diffStates = Just <| diffStates
-              , diffTree = Just diffTree
-              , activeNode = activeNode
-              , diffEventsUuids = diffEventsUuids
+                | questionnaireMigration = Success questionnaireMigration
+                , diffStates = Just <| diffStates
+                , diffTree = Just diffTree
+                , activeNode = activeNode
+                , diffEventsUuids = diffEventsUuids
               }
             , Cmd.none
             )
@@ -124,19 +124,19 @@ handleGetQuestionnaireMigrationCompleted model result =
             )
 
 
-handleMigrateQuestionnaire : ( Msg -> Msgs.Msg ) -> AppState -> Model -> String -> ( Model, Cmd Msgs.Msg )
+handleMigrateQuestionnaire : (Msg -> Msgs.Msg) -> AppState -> Model -> String -> ( Model, Cmd Msgs.Msg )
 handleMigrateQuestionnaire wrapMsg appState model uuid =
     let
         cmd =
-            Cmd.map wrapMsg
-                <| QuestionnairesApi.putMigrateQuestionnaire uuid appState MigrateQuestionnaireCompleted
+            Cmd.map wrapMsg <|
+                QuestionnairesApi.putMigrateQuestionnaire uuid appState MigrateQuestionnaireCompleted
     in
     ( model, cmd )
 
 
-handleMigrateQuestionnaireCompleted : ( Msg -> Msgs.Msg ) -> AppState -> Model -> ( Model, Cmd Msgs.Msg )
+handleMigrateQuestionnaireCompleted : (Msg -> Msgs.Msg) -> AppState -> Model -> ( Model, Cmd Msgs.Msg )
 handleMigrateQuestionnaireCompleted wrapMsg appState model =
-    ( model, Routing.cmdNavigate appState.key <| Routing.Questionnaires Index)
+    ( model, Routing.cmdNavigate appState.key <| Routing.Questionnaires Index )
 
 
 createDiffEventUuids : Dict.Dict String DiffState -> Dict.Dict String TreeNode -> String -> List NodeUuids
@@ -155,10 +155,11 @@ createDiffEventUuids diffStates diffTree treeUuid =
                             , diffStateUuid = getDiffStateUuid state
                             }
                     in
-                        uuids :: children
+                    uuids :: children
 
                 Nothing ->
                     children
+
         Nothing ->
             []
 
@@ -168,7 +169,7 @@ handleShowPreviousDiffEvent model node =
     let
         maybePreviousEventUuid =
             elemIndex node model.diffEventsUuids
-                |> Maybe.andThen ( \index -> getAt (index - 1) model.diffEventsUuids )
+                |> Maybe.andThen (\index -> getAt (index - 1) model.diffEventsUuids)
     in
     case maybePreviousEventUuid of
         Nothing ->
@@ -183,7 +184,7 @@ handleNextDiffEvent model node =
     let
         maybeNextEventUuid =
             elemIndex node model.diffEventsUuids
-                |> Maybe.andThen ( \index -> getAt (index + 1) model.diffEventsUuids )
+                |> Maybe.andThen (\index -> getAt (index + 1) model.diffEventsUuids)
     in
     case maybeNextEventUuid of
         Nothing ->
@@ -220,13 +221,13 @@ handleSelectDiffTreeNode model node =
     ( { model | activeNode = activeNode }, Cmd.none )
 
 
-handleSetMigrationChangeAsNeedsReview : (Msg -> Msgs.Msg) -> AppState -> Model -> String -> (List String) -> ( Model, Cmd Msgs.Msg )
+handleSetMigrationChangeAsNeedsReview : (Msg -> Msgs.Msg) -> AppState -> Model -> String -> List String -> ( Model, Cmd Msgs.Msg )
 handleSetMigrationChangeAsNeedsReview wrapMsg appState model uuid questionPath =
     handleSetMigrationQuestionFlag wrapMsg appState model uuid questionPath NeedsReview
 
 
-handleSetMigrationChangeAsResolved : (Msg -> Msgs.Msg) -> AppState -> Model -> String -> (List String) -> ( Model, Cmd Msgs.Msg )
-handleSetMigrationChangeAsResolved  wrapMsg appState model uuid questionPath =
+handleSetMigrationChangeAsResolved : (Msg -> Msgs.Msg) -> AppState -> Model -> String -> List String -> ( Model, Cmd Msgs.Msg )
+handleSetMigrationChangeAsResolved wrapMsg appState model uuid questionPath =
     handleSetMigrationQuestionFlag wrapMsg appState model uuid questionPath MigrationResolved
 
 
@@ -235,7 +236,7 @@ handleSetMigrationQuestionFlag wrapMsg appState model uuid questionPath flagType
     let
         flag =
             { questionPath = questionPath
-            , flagTypes = [flagType]
+            , flagTypes = [ flagType ]
             }
 
         body =
@@ -245,9 +246,8 @@ handleSetMigrationQuestionFlag wrapMsg appState model uuid questionPath flagType
             { model | settingQuestionFlag = Loading, questionFlagToBeAdded = Just flag }
 
         cmd =
-            Cmd.map wrapMsg
-                <| QuestionnairesApi.putQuestionnaireMigrationQuestionFlag uuid body appState SettingMigrationChangeCompleted
-
+            Cmd.map wrapMsg <|
+                QuestionnairesApi.putQuestionnaireMigrationQuestionFlag uuid body appState SettingMigrationChangeCompleted
     in
     ( newModel, cmd )
 
@@ -267,8 +267,8 @@ handleDeleteMigrationChange wrapMsg appState model uuid path =
             encodeQuestionFlag flag
 
         cmd =
-            Cmd.map wrapMsg
-                <| QuestionnairesApi.putQuestionnaireMigrationQuestionFlag uuid body appState DeleteMigrationChangeCompleted
+            Cmd.map wrapMsg <|
+                QuestionnairesApi.putQuestionnaireMigrationQuestionFlag uuid body appState DeleteMigrationChangeCompleted
     in
     ( newModel, cmd )
 
@@ -280,7 +280,7 @@ handleDeleteMigrationChangeCompleted model result =
             let
                 path =
                     model.questionFlagToBeRemovedPath
-                    |> Maybe.withDefault []
+                        |> Maybe.withDefault []
 
                 oldFlags =
                     questionnaireMigration.questionnaire.questionFlags
@@ -300,13 +300,12 @@ handleDeleteMigrationChangeCompleted model result =
 
                 newModel =
                     { model
-                    | questionnaireMigration = Success newQuestionnaireMigration
-                    , questionFlagToBeRemovedPath = Nothing
-                    , removingQuestionFlag = Success ""
+                        | questionnaireMigration = Success newQuestionnaireMigration
+                        , questionFlagToBeRemovedPath = Nothing
+                        , removingQuestionFlag = Success ""
                     }
             in
             ( newModel, Cmd.none )
-
 
         ( Err error, _ ) ->
             ( { model | removingQuestionFlag = getServerError error "Unable to remove question flag." }
@@ -319,8 +318,8 @@ handleDeleteMigrationChangeCompleted model result =
 
 handleSettingMigrationChangeCompleted : Model -> Result ApiError () -> ( Model, Cmd Msgs.Msg )
 handleSettingMigrationChangeCompleted model result =
-    case (result, model.questionnaireMigration) of
-        (Ok _, Success questionnaireMigration) ->
+    case ( result, model.questionnaireMigration ) of
+        ( Ok _, Success questionnaireMigration ) ->
             let
                 oldQuestionFlags =
                     questionnaireMigration.questionnaire.questionFlags
@@ -332,7 +331,7 @@ handleSettingMigrationChangeCompleted model result =
                                 filteredOldFlags =
                                     List.filter (\f -> f.questionPath /= flag.questionPath) oldQuestionFlags
                             in
-                            filteredOldFlags ++ [flag]
+                            filteredOldFlags ++ [ flag ]
 
                         Nothing ->
                             oldQuestionFlags
@@ -347,19 +346,21 @@ handleSettingMigrationChangeCompleted model result =
                     { questionnaireMigration | questionnaire = newQuestionnaire }
             in
             ( { model
-              | settingQuestionFlag = Success ""
-              , questionFlagToBeAdded = Nothing
-              , questionnaireMigration = Success newMigration
+                | settingQuestionFlag = Success ""
+                , questionFlagToBeAdded = Nothing
+                , questionnaireMigration = Success newMigration
               }
             , Cmd.none
             )
 
-        (Err error, _) ->
+        ( Err error, _ ) ->
             ( { model | settingQuestionFlag = getServerError error "Unable to set question flag." }
             , getResultCmd result
             )
-        (_, _) ->
+
+        ( _, _ ) ->
             ( model, Cmd.none )
+
 
 
 -- ----------------
@@ -440,10 +441,11 @@ createQuestionDiffSubTreeAtKey parentPath insertionKey replies question diffTree
         reply =
             findQuestionReply replies replyPath
 
-        questionsChildren : List (Int, List Question)
+        questionsChildren : List ( Int, List Question )
         questionsChildren =
             if List.length (getQuestionItemQuestions question) == 0 then
                 []
+
             else
                 let
                     -- We always want to see at least one item (even though it's not answered)
@@ -456,25 +458,28 @@ createQuestionDiffSubTreeAtKey parentPath insertionKey replies question diffTree
                                 1
                 in
                 List.range 0 (subQuestionsCount - 1)
-                    |> List.map (\i -> (i, getQuestionItemQuestions question))
+                    |> List.map (\i -> ( i, getQuestionItemQuestions question ))
 
         withAnswersSubtreeDict =
             List.foldl (createAnswerDiffSubTree path replies) diffTree <| getQuestionAnswers question
 
         -- Create subtree for item templates
         subtreeWithSubquetsions =
-            List.foldl (\(index, qs) (uuids, tree) ->
-                let
-                    st =
-                        createListItemQuestionDiffSubTree path uuid index replies qs tree
-                in
-                (uuids ++ [Tuple.first st], Tuple.second st)
-                ) ([], withAnswersSubtreeDict) questionsChildren
+            List.foldl
+                (\( index, qs ) ( uuids, tree ) ->
+                    let
+                        st =
+                            createListItemQuestionDiffSubTree path uuid index replies qs tree
+                    in
+                    ( uuids ++ [ Tuple.first st ], Tuple.second st )
+                )
+                ( [], withAnswersSubtreeDict )
+                questionsChildren
 
         questionNode =
             { uuid = uuid
             , treeUuid = insertionKey
-            , children = answersChildren ++ (Tuple.first subtreeWithSubquetsions)
+            , children = answersChildren ++ Tuple.first subtreeWithSubquetsions
             , title = getQuestionTitle question
             , expansionState = Collapsed
             , path = path
@@ -484,7 +489,7 @@ createQuestionDiffSubTreeAtKey parentPath insertionKey replies question diffTree
     Dict.insert insertionKey questionNode (Tuple.second subtreeWithSubquetsions)
 
 
-createListItemQuestionDiffSubTree : Path -> String -> Int -> FormValues -> List Question -> Dict.Dict String TreeNode -> (String, Dict.Dict String TreeNode)
+createListItemQuestionDiffSubTree : Path -> String -> Int -> FormValues -> List Question -> Dict.Dict String TreeNode -> ( String, Dict.Dict String TreeNode )
 createListItemQuestionDiffSubTree parentPath parentQuestionUuid itemIndex replies questions diffTree =
     let
         uuid =
@@ -492,7 +497,7 @@ createListItemQuestionDiffSubTree parentPath parentQuestionUuid itemIndex replie
                 |> String.join "."
 
         questionInsertionKey q =
-            [ String.fromInt itemIndex, getQuestionUuid q]
+            [ String.fromInt itemIndex, getQuestionUuid q ]
                 |> String.join "."
 
         children =
@@ -572,6 +577,7 @@ toggleExpansionState state =
             Expanded
 
 
+
 -- ----------------
 -- Diff State Model
 -- ----------------
@@ -619,7 +625,7 @@ convertDiffEventToDiffState previousKnowledgeModel diffKnowledgeModel =
                         uuid =
                             getAddQuestionUuid data
                     in
-                        Dict.insert uuid (createQuestionCreatedState uuid diffKnowledgeModel) dict
+                    Dict.insert uuid (createQuestionCreatedState uuid diffKnowledgeModel) dict
 
                 EditQuestionEvent data _ ->
                     let
@@ -668,7 +674,7 @@ convertDiffEventToDiffState previousKnowledgeModel diffKnowledgeModel =
 
                 AddIntegrationEvent _ _ ->
                     dict
-                
+
                 EditIntegrationEvent _ _ ->
                     dict
 
@@ -684,8 +690,8 @@ appendUnchangedKnowledgeModelNodes knowledgeModel diffStates =
         updatedDiffStates =
             List.foldl appendUnchagnedChapterNodes diffStates knowledgeModel.chapters
     in
-    insertDiffStateIfNotExists updatedDiffStates
-        <| createKnowledgeModelUnchangedState knowledgeModel
+    insertDiffStateIfNotExists updatedDiffStates <|
+        createKnowledgeModelUnchangedState knowledgeModel
 
 
 appendUnchagnedChapterNodes : Chapter -> Dict String DiffState -> Dict String DiffState
@@ -694,8 +700,8 @@ appendUnchagnedChapterNodes chapter diffStates =
         updatedDiffStates =
             List.foldl appendUnchangedQuestionNodes diffStates chapter.questions
     in
-    insertDiffStateIfNotExists updatedDiffStates
-        <| createChapterUnchangedState chapter
+    insertDiffStateIfNotExists updatedDiffStates <|
+        createChapterUnchangedState chapter
 
 
 appendUnchangedQuestionNodes : Question -> Dict String DiffState -> Dict String DiffState
@@ -707,8 +713,8 @@ appendUnchangedQuestionNodes question diffStates =
         updatedDiffStates =
             List.foldl appendUnchangedQuestionNodes withAnswersDiffStates (getQuestionItemQuestions question)
     in
-    insertDiffStateIfNotExists updatedDiffStates
-        <| createQuestionUnchangedState question
+    insertDiffStateIfNotExists updatedDiffStates <|
+        createQuestionUnchangedState question
 
 
 appendUnchangedAnswerNodes : Answer -> Dict String DiffState -> Dict String DiffState
@@ -717,8 +723,8 @@ appendUnchangedAnswerNodes answer diffStates =
         updatedDiffStates =
             List.foldl appendUnchangedQuestionNodes diffStates (getFollowUpQuestions answer)
     in
-    insertDiffStateIfNotExists updatedDiffStates
-        <| createAnswerUnchangedState answer
+    insertDiffStateIfNotExists updatedDiffStates <|
+        createAnswerUnchangedState answer
 
 
 insertDiffStateIfNotExists : Dict String DiffState -> DiffState -> Dict String DiffState
@@ -737,11 +743,11 @@ insertDiffStateIfNotExists diffStates state =
 
 createKnowledgeModelCreatedState : KnowledgeModel -> DiffState
 createKnowledgeModelCreatedState knowledgeModel =
-    Created
-        <| KnowledgeModelDiffNode
-        <| { uuid = knowledgeModel.uuid
-           , name = [ Diff.Added knowledgeModel.name ]
-           }
+    Created <|
+        KnowledgeModelDiffNode <|
+            { uuid = knowledgeModel.uuid
+            , name = [ Diff.Added knowledgeModel.name ]
+            }
 
 
 createKnowledgeModelModifiedState : KnowledgeModel -> KnowledgeModel -> DiffState
@@ -750,26 +756,26 @@ createKnowledgeModelModifiedState prevKm diffKm =
         nameDiff =
             diffStrings prevKm.name diffKm.name
     in
-        Modified
-            ( KnowledgeModelDiffNode
-                { uuid = prevKm.uuid
-                , name = oldNodeDiffChanges nameDiff
-                }
-            )
-            ( KnowledgeModelDiffNode
-                { uuid = diffKm.uuid
-                , name = newNodeDiffChanges nameDiff
-                }
-            )
+    Modified
+        (KnowledgeModelDiffNode
+            { uuid = prevKm.uuid
+            , name = oldNodeDiffChanges nameDiff
+            }
+        )
+        (KnowledgeModelDiffNode
+            { uuid = diffKm.uuid
+            , name = newNodeDiffChanges nameDiff
+            }
+        )
 
 
 createKnowledgeModelUnchangedState : KnowledgeModel -> DiffState
 createKnowledgeModelUnchangedState knowledgeModel =
-    Unchanged
-        <| KnowledgeModelDiffNode
-        <| { uuid = knowledgeModel.uuid
-           , name = [ Diff.NoChange knowledgeModel.name ]
-           }
+    Unchanged <|
+        KnowledgeModelDiffNode <|
+            { uuid = knowledgeModel.uuid
+            , name = [ Diff.NoChange knowledgeModel.name ]
+            }
 
 
 createChapterCreatedState : String -> KnowledgeModel -> DiffState
@@ -778,12 +784,12 @@ createChapterCreatedState uuid knowledgeModel =
         chapter =
             findChapterByUuid uuid knowledgeModel
     in
-    Created
-        <| ChapterDiffNode
-        <| { uuid = chapter.uuid
-           , title = [ Diff.Added chapter.title ]
-           , text =  [ Diff.Added chapter.text ]
-           }
+    Created <|
+        ChapterDiffNode <|
+            { uuid = chapter.uuid
+            , title = [ Diff.Added chapter.title ]
+            , text = [ Diff.Added chapter.text ]
+            }
 
 
 createChapterModifiedState : String -> KnowledgeModel -> KnowledgeModel -> DiffState
@@ -802,13 +808,13 @@ createChapterModifiedState uuid previousKnowledgeModel newKnowledgeModel =
             diffStrings oldChapter.text newChapter.text
     in
     Modified
-        ( ChapterDiffNode
+        (ChapterDiffNode
             { uuid = uuid
             , title = oldNodeDiffChanges titleDiff
             , text = oldNodeDiffChanges textDiff
             }
         )
-        ( ChapterDiffNode
+        (ChapterDiffNode
             { uuid = uuid
             , title = newNodeDiffChanges titleDiff
             , text = newNodeDiffChanges textDiff
@@ -818,12 +824,12 @@ createChapterModifiedState uuid previousKnowledgeModel newKnowledgeModel =
 
 createChapterUnchangedState : Chapter -> DiffState
 createChapterUnchangedState chapter =
-    Unchanged
-        <| ChapterDiffNode
-        <| { uuid = chapter.uuid
-           , title = [ Diff.NoChange chapter.title ]
-           , text = [ Diff.NoChange chapter.text ]
-           }
+    Unchanged <|
+        ChapterDiffNode <|
+            { uuid = chapter.uuid
+            , title = [ Diff.NoChange chapter.title ]
+            , text = [ Diff.NoChange chapter.text ]
+            }
 
 
 createChapterRemovedState : String -> KnowledgeModel -> DiffState
@@ -832,12 +838,12 @@ createChapterRemovedState uuid knowledgeModel =
         chapter =
             findChapterByUuid uuid knowledgeModel
     in
-    Removed
-        <| ChapterDiffNode
-        <| { uuid = uuid
-           , title = [ Diff.Removed chapter.title ]
-           , text = [ Diff.Removed chapter.text ]
-           }
+    Removed <|
+        ChapterDiffNode <|
+            { uuid = uuid
+            , title = [ Diff.Removed chapter.title ]
+            , text = [ Diff.Removed chapter.text ]
+            }
 
 
 createQuestionCreatedState : String -> KnowledgeModel -> DiffState
@@ -851,13 +857,13 @@ createQuestionCreatedState uuid knowledgeModel =
                 |> Maybe.map (List.singleton << Diff.Added)
                 |> Maybe.withDefault []
     in
-    Created
-        <| QuestionDiffNode
-        <| { uuid = uuid
-           , title = [ Diff.Added <| getQuestionTitle question ]
-           , text = textDiff
-           , question = question
-           }
+    Created <|
+        QuestionDiffNode <|
+            { uuid = uuid
+            , title = [ Diff.Added <| getQuestionTitle question ]
+            , text = textDiff
+            , question = question
+            }
 
 
 createQuestionModifiedState : String -> KnowledgeModel -> KnowledgeModel -> DiffState
@@ -877,14 +883,14 @@ createQuestionModifiedState uuid previousKnowledgeModel diffKnowledgeModel =
                 |> Maybe.withDefault []
     in
     Modified
-        ( QuestionDiffNode
+        (QuestionDiffNode
             { uuid = uuid
             , title = oldNodeDiffChanges titleDiff
             , text = oldNodeDiffChanges textDiff
             , question = oldQuestion
             }
         )
-        ( QuestionDiffNode
+        (QuestionDiffNode
             { uuid = uuid
             , title = newNodeDiffChanges titleDiff
             , text = newNodeDiffChanges textDiff
@@ -901,16 +907,16 @@ createQuestionRemovedState uuid knowledgeModel =
 
         textDiff =
             getQuestionText question
-                |> Maybe.map ( List.singleton << Diff.Removed )
+                |> Maybe.map (List.singleton << Diff.Removed)
                 |> Maybe.withDefault []
     in
-    Removed
-        <| QuestionDiffNode
-        <| { uuid = uuid
-           , title = [ Diff.Removed <| getQuestionTitle question ]
-           , text = textDiff
-           , question = question
-           }
+    Removed <|
+        QuestionDiffNode <|
+            { uuid = uuid
+            , title = [ Diff.Removed <| getQuestionTitle question ]
+            , text = textDiff
+            , question = question
+            }
 
 
 createQuestionUnchangedState : Question -> DiffState
@@ -921,13 +927,13 @@ createQuestionUnchangedState question =
                 |> Maybe.map (List.singleton << Diff.NoChange)
                 |> Maybe.withDefault []
     in
-    Unchanged
-        <| QuestionDiffNode
-        <| { uuid = getQuestionUuid question
-           , title = [ Diff.NoChange <| getQuestionTitle question ]
-           , text = text
-           , question = question
-           }
+    Unchanged <|
+        QuestionDiffNode <|
+            { uuid = getQuestionUuid question
+            , title = [ Diff.NoChange <| getQuestionTitle question ]
+            , text = text
+            , question = question
+            }
 
 
 createAnswerCreatedState : String -> KnowledgeModel -> DiffState
@@ -941,13 +947,14 @@ createAnswerCreatedState uuid knowledgeModel =
                 |> Maybe.map (List.singleton << Diff.Added)
                 |> Maybe.withDefault []
     in
-    Created
-        <| AnswerDiffNode
-        <| { uuid = answer.uuid
-           , label = [ Diff.Added answer.label ]
-           , advice = adviceDiff
-           , answer = answer
-           }
+    Created <|
+        AnswerDiffNode <|
+            { uuid = answer.uuid
+            , label = [ Diff.Added answer.label ]
+            , advice = adviceDiff
+            , answer = answer
+            }
+
 
 createAnswerModifiedState : String -> KnowledgeModel -> KnowledgeModel -> DiffState
 createAnswerModifiedState uuid previousKnowledgeModel diffKnowledgeModel =
@@ -966,14 +973,14 @@ createAnswerModifiedState uuid previousKnowledgeModel diffKnowledgeModel =
                 |> Maybe.withDefault []
     in
     Modified
-        ( AnswerDiffNode
+        (AnswerDiffNode
             { uuid = uuid
             , label = oldNodeDiffChanges labelDiff
             , advice = oldNodeDiffChanges adviceDiff
             , answer = oldAnswer
             }
         )
-        ( AnswerDiffNode
+        (AnswerDiffNode
             { uuid = uuid
             , label = newNodeDiffChanges labelDiff
             , advice = newNodeDiffChanges adviceDiff
@@ -990,16 +997,16 @@ createAnswerDeletedState uuid knowledgeModel =
 
         adviceDiff =
             answer.advice
-                |> Maybe.map ( List.singleton << Diff.Added )
+                |> Maybe.map (List.singleton << Diff.Added)
                 |> Maybe.withDefault []
     in
-    Removed
-        <| AnswerDiffNode
-        <| { uuid = uuid
-           , label = [ Diff.Removed answer.label ]
-           , advice = adviceDiff
-           , answer = answer
-           }
+    Removed <|
+        AnswerDiffNode <|
+            { uuid = uuid
+            , label = [ Diff.Removed answer.label ]
+            , advice = adviceDiff
+            , answer = answer
+            }
 
 
 createAnswerUnchangedState : Answer -> DiffState
@@ -1007,16 +1014,16 @@ createAnswerUnchangedState answer =
     let
         advice =
             answer.advice
-                |> Maybe.map ( List.singleton << Diff.NoChange )
+                |> Maybe.map (List.singleton << Diff.NoChange)
                 |> Maybe.withDefault []
     in
-    Unchanged
-        <| AnswerDiffNode
-        <| { uuid = answer.uuid
-           , label = [ Diff.NoChange answer.label ]
-           , advice = advice
-           , answer = answer
-           }
+    Unchanged <|
+        AnswerDiffNode <|
+            { uuid = answer.uuid
+            , label = [ Diff.NoChange answer.label ]
+            , advice = advice
+            , answer = answer
+            }
 
 
 dummyChapter : Chapter
@@ -1030,16 +1037,17 @@ dummyChapter =
 
 dummyQuestion : Question
 dummyQuestion =
-    OptionsQuestion
-        <| { uuid = ""
-            , title = ""
-            , text = Nothing
-            , requiredLevel = Nothing
-            , tagUuids = []
-            , references = []
-            , experts = []
-            , answers = []
-           }
+    OptionsQuestion <|
+        { uuid = ""
+        , title = ""
+        , text = Nothing
+        , requiredLevel = Nothing
+        , tagUuids = []
+        , references = []
+        , experts = []
+        , answers = []
+        }
+
 
 dummyAnswer : Answer
 dummyAnswer =
@@ -1084,9 +1092,14 @@ diffStrings l r =
 mapDiffChange : (a -> b) -> Diff.Change a -> Diff.Change b
 mapDiffChange f change =
     case change of
-        Diff.Added c -> Diff.Added <| f c
-        Diff.Removed c -> Diff.Removed <| f c
-        Diff.NoChange c -> Diff.NoChange <| f c
+        Diff.Added c ->
+            Diff.Added <| f c
+
+        Diff.Removed c ->
+            Diff.Removed <| f c
+
+        Diff.NoChange c ->
+            Diff.NoChange <| f c
 
 
 getKnowledgeModelQuestions : KnowledgeModel -> List Question
@@ -1099,6 +1112,7 @@ getChapterQuestions : Chapter -> List Question
 getChapterQuestions chapter =
     chapter.questions
         |> andThen unwrapWithNestedQuestions
+
 
 getKnowledgeModelAnswers : KnowledgeModel -> List Answer
 getKnowledgeModelAnswers knowledgeModel =
@@ -1129,6 +1143,7 @@ oldNodeDiffChanges =
     in
     List.filter oldChanges
 
+
 newNodeDiffChanges : List (Diff.Change a) -> List (Diff.Change a)
 newNodeDiffChanges =
     let
@@ -1137,7 +1152,7 @@ newNodeDiffChanges =
                 Diff.Removed _ ->
                     False
 
-                _ -> True
+                _ ->
+                    True
     in
     List.filter newChanges
-

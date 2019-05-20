@@ -4,26 +4,27 @@ module Common.Questionnaire.Models exposing
     , FeedbackForm
     , FormExtraData
     , Model
-    , QuestionnaireDetail
-    , QuestionFlags
     , QuestionFlagType(..)
+    , QuestionFlags
+    , QuestionnaireDetail
     , calculateUnansweredQuestions
     , chapterReportCanvasId
     , createChartConfig
     , encodeFeedbackFrom
-    , encodeQuestionnaireDetail
     , encodeQuestionFlag
+    , encodeQuestionnaireDetail
     , feedbackDecoder
     , feedbackFormValidation
     , feedbackListDecoder
+    , findQuestionFlagAtPath
+    ,  getReply
+
     , initEmptyFeedbackFrom
     , initialModel
     , questionnaireDetailDecoder
     , setActiveChapter
     , setLevel
     , updateReplies
-    , findQuestionFlagAtPath
-    , getReply
     --
     , createChapterForm
     )
@@ -46,7 +47,6 @@ import List.Extra as List
 import Questionnaires.Common.Models.QuestionnaireAccessibility as QuestionnaireAccessibility exposing (QuestionnaireAccessibility)
 import String exposing (fromInt)
 import Utils exposing (boolToInt)
-import Json.Encode as Encode
 
 
 type alias Model =
@@ -159,6 +159,7 @@ findQuestionFlagAtPath flags path =
     in
     List.find containsPath flags
 
+
 type alias FeedbackForm =
     { title : String
     , content : String
@@ -200,6 +201,7 @@ encodeQuestionFlagType flagType =
     case flagType of
         NeedsReview ->
             Encode.string "NeedsReview"
+
         MigrationResolved ->
             Encode.string "MigrationResolved"
 
@@ -228,7 +230,7 @@ questionFlagDecoder : Decoder QuestionFlags
 questionFlagDecoder =
     Decode.succeed QuestionFlags
         |> required "questionPath" (Decode.list Decode.string)
-        |> required "flagTypes" ( Decode.list flagTypeDecoder)
+        |> required "flagTypes" (Decode.list flagTypeDecoder)
 
 
 questionFlagListDecoder : Decoder (List QuestionFlags)

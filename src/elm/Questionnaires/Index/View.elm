@@ -4,20 +4,20 @@ import ActionResult exposing (ActionResult(..))
 import Common.AppState exposing (AppState)
 import Common.Html exposing (emptyNode, fa, linkTo)
 import Common.Html.Attribute exposing (listClass)
+import Common.View.FormGroup as FormGroup
 import Common.View.FormResult as FormResult
 import Common.View.Listing as Listing exposing (ListingActionConfig, ListingActionType(..), ListingConfig)
 import Common.View.Modal as Modal
 import Common.View.Page as Page
+import Form
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import KnowledgeModels.Common.Models exposing (PackageDetail)
 import KnowledgeModels.Routing
 import Msgs
 import Questionnaires.Common.Models exposing (Questionnaire, QuestionnaireState(..), isEditable)
 import Questionnaires.Common.View exposing (accessibilityBadge)
 import Questionnaires.Index.ExportModal.View as ExportModal
-import Common.View.FormGroup as FormGroup
-import Form
-import KnowledgeModels.Common.Models exposing (PackageDetail)
 import Questionnaires.Index.Models exposing (Model)
 import Questionnaires.Index.Msgs exposing (Msg(..))
 import Questionnaires.Routing exposing (Route(..))
@@ -162,16 +162,16 @@ listingActions wrapMsg appState questionnaire =
             questionnaire.state == Migrating
 
         outdated =
-            questionnaire.state == Outdated        
+            questionnaire.state == Outdated
     in
     []
-        |> listInsertIf fillQuestionnaire (editable && (not migrating))
+        |> listInsertIf fillQuestionnaire (editable && not migrating)
         |> listInsertIf viewQuestionnaire (not editable)
         |> listInsertIf continueMigration migrating
         |> listInsertIf cancelMigration migrating
         |> listInsertIf export_ True
         |> listInsertIf upgrade outdated
-        |> listInsertIf edit (editable && (not migrating))
+        |> listInsertIf edit (editable && not migrating)
         |> listInsertIf delete editable
 
 
@@ -211,6 +211,7 @@ deleteModal wrapMsg model =
     in
     Modal.confirm modalConfig
 
+
 upgradeQuestionnaireModal : (Msg -> Msgs.Msg) -> Model -> Html Msgs.Msg
 upgradeQuestionnaireModal wrapMsg model =
     let
@@ -225,7 +226,7 @@ upgradeQuestionnaireModal wrapMsg model =
         options =
             case model.upgradableKnowledgeModels of
                 Success packages ->
-                    ( "", "- select new base knowledge model -") :: List.map upgradeOption packages
+                    ( "", "- select new base knowledge model -" ) :: List.map upgradeOption packages
 
                 _ ->
                     []
@@ -269,12 +270,12 @@ migrationBadge : QuestionnaireState -> Html msg
 migrationBadge state =
     case state of
         Migrating ->
-            span [ class "badge badge-info"]
+            span [ class "badge badge-info" ]
                 [ text "migrating" ]
 
         Outdated ->
-            span [ class "badge badge-warning"]
-                [ text "outdated"]
+            span [ class "badge badge-warning" ]
+                [ text "outdated" ]
 
         Default ->
             emptyNode
@@ -285,6 +286,5 @@ upgradeOption package =
     let
         optionText =
             package.name ++ " " ++ package.version ++ " (" ++ package.id ++ ")"
-
     in
     ( package.id, optionText )

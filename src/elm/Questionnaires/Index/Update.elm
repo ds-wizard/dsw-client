@@ -15,11 +15,12 @@ import Msgs
 import Questionnaires.Common.Models exposing (Questionnaire)
 import Questionnaires.Index.ExportModal.Models exposing (setQuestionnaire)
 import Questionnaires.Index.ExportModal.Update as ExportModal
-import Questionnaires.Index.Models exposing (Model, QuestionnaireRow, initQuestionnaireRow, questionnaireUpgradeFormValidation, encodeQuestionnaireUpgradeForm)
+import Questionnaires.Index.Models exposing (Model, QuestionnaireRow, encodeQuestionnaireUpgradeForm, initQuestionnaireRow, questionnaireUpgradeFormValidation)
 import Questionnaires.Index.Msgs exposing (Msg(..))
 import Questionnaires.Routing exposing (Route(..))
 import Routing exposing (cmdNavigate)
 import Utils exposing (versionIsGreater)
+
 
 fetchData : (Msg -> Msgs.Msg) -> AppState -> Cmd Msgs.Msg
 fetchData wrapMsg appState =
@@ -119,7 +120,7 @@ deleteQuestionnaireCompleted wrapMsg appState model result =
             )
 
 
-handleDeleteMigration : (Msg -> Msgs.Msg) -> AppState -> String -> Model -> (Model, Cmd Msgs.Msg)
+handleDeleteMigration : (Msg -> Msgs.Msg) -> AppState -> String -> Model -> ( Model, Cmd Msgs.Msg )
 handleDeleteMigration wrapMsg appState uuid model =
     ( { model | deletingMigration = Loading }, deletingMigrationCmd wrapMsg appState uuid )
 
@@ -131,6 +132,7 @@ deleteMigrationCompleted wrapMsg appState model result =
             ( { model | deletingMigration = Success "Questionnaire migration was canceled", questionnaires = Loading }
             , fetchData wrapMsg appState
             )
+
         Err error ->
             ( { model | deletingMigration = getServerError error "Questionnaire migration could not be canceled" }
             , getResultCmd result
@@ -139,8 +141,8 @@ deleteMigrationCompleted wrapMsg appState model result =
 
 deletingMigrationCmd : (Msg -> Msgs.Msg) -> AppState -> String -> Cmd Msgs.Msg
 deletingMigrationCmd wrapMsg appState uuid =
-    Cmd.map wrapMsg
-        <| QuestionnairesApi.deleteQuestionnaireMigration uuid appState DeleteQuestionnaireMigrationCompleted
+    Cmd.map wrapMsg <|
+        QuestionnairesApi.deleteQuestionnaireMigration uuid appState DeleteQuestionnaireMigrationCompleted
 
 
 handleQuestionnaireUpgradeForm : (Msg -> Msgs.Msg) -> AppState -> Form.Msg -> Model -> ( Model, Cmd Msgs.Msg )
@@ -150,11 +152,11 @@ handleQuestionnaireUpgradeForm wrapMsg appState formMsg model =
             encodeQuestionnaireUpgradeForm form
 
         createMigrationCmd form uuid =
-            Cmd.map wrapMsg
-                <| QuestionnairesApi.postQuestionnaireMigration uuid (body form) appState PostQuestionnaireMigrationCompleted
+            Cmd.map wrapMsg <|
+                QuestionnairesApi.postQuestionnaireMigration uuid (body form) appState PostQuestionnaireMigrationCompleted
     in
     case ( formMsg, Form.getOutput model.questionnaireUpgradeForm, model.questionnaireToBeUpgraded ) of
-        ( Form.Submit, Just questionnaireForm, Just questionnaire) ->
+        ( Form.Submit, Just questionnaireForm, Just questionnaire ) ->
             ( { model | creatingQuestionnaireMigration = Loading }
             , createMigrationCmd questionnaireForm questionnaire.uuid
             )
@@ -175,7 +177,7 @@ handlePostQuestionnaireMigrationCompleted wrapMsg appState result model =
                         |> Maybe.andThen (Just << .uuid)
                         |> Maybe.withDefault ""
             in
-            ( model, cmdNavigate appState.key <| Routing.Questionnaires << Migrate <| questionnaireUuid)
+            ( model, cmdNavigate appState.key <| Routing.Questionnaires << Migrate <| questionnaireUuid )
 
         Err error ->
             ( { model | creatingQuestionnaireMigration = getServerError error "Questionnaire migration could not be created." }
@@ -195,7 +197,6 @@ handleUpgradableKnowledgeModelsCompleted wrapMsg result model =
 
                 packages =
                     List.filter (.version >> versionIsGreater currentVersion) kms
-
             in
             ( { model | upgradableKnowledgeModels = Success packages }
             , Cmd.none
@@ -207,7 +208,7 @@ handleUpgradableKnowledgeModelsCompleted wrapMsg result model =
             )
 
 
-handleShowHideQuestionnaireUpgradeForm : (Msg -> Msgs.Msg) -> AppState -> Maybe Questionnaire -> Model -> (Model, Cmd Msgs.Msg)
+handleShowHideQuestionnaireUpgradeForm : (Msg -> Msgs.Msg) -> AppState -> Maybe Questionnaire -> Model -> ( Model, Cmd Msgs.Msg )
 handleShowHideQuestionnaireUpgradeForm wrapMsg appState mQuestionnaure model =
     case mQuestionnaure of
         Just questionnaire ->
@@ -216,10 +217,10 @@ handleShowHideQuestionnaireUpgradeForm wrapMsg appState mQuestionnaure model =
                     questionnaire.package
 
                 cmd =
-                    Cmd.map wrapMsg
-                        <| PackagesApi.getPackagesFiltered pkg.organizationId pkg.kmId appState GetUpgradableKnowledgeModelsCompleted
+                    Cmd.map wrapMsg <|
+                        PackagesApi.getPackagesFiltered pkg.organizationId pkg.kmId appState GetUpgradableKnowledgeModelsCompleted
             in
             ( { model | questionnaireToBeUpgraded = mQuestionnaure, upgradableKnowledgeModels = Loading }, cmd )
 
         _ ->
-            ( { model | questionnaireToBeUpgraded = Nothing, upgradableKnowledgeModels = Unset}, Cmd.none )
+            ( { model | questionnaireToBeUpgraded = Nothing, upgradableKnowledgeModels = Unset }, Cmd.none )

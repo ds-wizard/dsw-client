@@ -2,7 +2,7 @@ module Questionnaires.Migration.Msgs exposing (Msg(..))
 
 import Common.ApiError exposing (ApiError)
 import Questionnaires.Common.Models exposing (QuestionnaireMigration)
-import Questionnaires.Migration.Models exposing (TreeNode, NodeUuids)
+import Questionnaires.Migration.Models exposing (NodeUuids, TreeNode)
 import SplitPane
 
 
