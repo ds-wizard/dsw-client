@@ -50,7 +50,7 @@ putQuestionnaire uuid =
 
 putQuestionnaireMigrationQuestionFlag : String -> Value -> AppState -> ToMsg () msg -> Cmd msg
 putQuestionnaireMigrationQuestionFlag uuid =
-    jwtPut ("/questionnaires/" ++ uuid ++ "/migrations/resolveQuestionEvent")
+    jwtPost ("/questionnaires/" ++ uuid ++ "/migrations/flags")
 
 
 putMigrateQuestionnaire : String -> AppState -> ToMsg () msg -> Cmd msg
