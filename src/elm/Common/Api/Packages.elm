@@ -8,12 +8,12 @@ module Common.Api.Packages exposing
     , pullPackage
     )
 
-import Common.Api exposing (ToMsg, jwtDelete, jwtGet, jwtPostEmpty, jwtPostString)
+import Common.Api exposing (ToMsg, jwtDelete, jwtGet, jwtPostEmpty, jwtPostFile)
 import Common.AppState exposing (AppState)
+import File exposing (File)
 import Json.Decode as D
 import KnowledgeModels.Common.Package as Package exposing (Package)
 import KnowledgeModels.Common.PackageDetail as PackageDetail exposing (PackageDetail)
-import Ports exposing (FilePortData)
 
 
 getPackages : AppState -> ToMsg (List Package) msg -> Cmd msg
@@ -41,9 +41,9 @@ pullPackage packageId =
     jwtPostEmpty ("/packages/" ++ packageId ++ "/pull")
 
 
-importPackage : FilePortData -> AppState -> ToMsg () msg -> Cmd msg
+importPackage : File -> AppState -> ToMsg (List Package) msg -> Cmd msg
 importPackage file =
-    jwtPostString "/packages" "application/json" file.contents
+    jwtPostFile "/import" file (D.list Package.decoder)
 
 
 exportPackageUrl : String -> AppState -> String

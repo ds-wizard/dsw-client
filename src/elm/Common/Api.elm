@@ -11,7 +11,7 @@ module Common.Api exposing
     , jwtGet
     , jwtPost
     , jwtPostEmpty
-    , jwtPostString
+    , jwtPostFile
     , jwtPut
     )
 
@@ -19,6 +19,7 @@ import ActionResult exposing (ActionResult(..))
 import Auth.Msgs
 import Common.ApiError exposing (ApiError(..), getServerError)
 import Common.AppState exposing (AppState)
+import File exposing (File)
 import Http
 import Json.Decode as Decode exposing (..)
 import Jwt.Http
@@ -47,21 +48,23 @@ jwtPost url body appState toMsg =
         }
 
 
-jwtPostString : String -> String -> String -> AppState -> ToMsg () msg -> Cmd msg
-jwtPostString url mime contents appState toMsg =
-    Jwt.Http.post appState.session.token
-        { url = appState.apiUrl ++ url
-        , body = Http.stringBody mime contents
-        , expect = expectWhatever toMsg
-        }
-
-
 jwtPostEmpty : String -> AppState -> ToMsg () msg -> Cmd msg
 jwtPostEmpty url appState toMsg =
     Jwt.Http.post appState.session.token
         { url = appState.apiUrl ++ url
         , body = Http.emptyBody
         , expect = expectWhatever toMsg
+        }
+
+
+jwtPostFile : String -> File -> Decoder a -> AppState -> ToMsg a msg -> Cmd msg
+jwtPostFile url file decoder appState toMsg =
+    Jwt.Http.post appState.session.token
+        { url = appState.apiUrl ++ url
+        , body =
+            Http.multipartBody
+                [ Http.filePart (File.name file) file ]
+        , expect = expectJson toMsg decoder
         }
 
 

@@ -5,10 +5,11 @@ import Common.AppState exposing (AppState)
 import Common.Locale exposing (l, lx)
 import Common.View.ActionButton as ActionButton
 import Common.View.FormResult as FormResult
+import File exposing (File)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Json.Decode as Decode
+import Json.Decode as D exposing (Decoder)
 import KnowledgeModels.Import.FileImport.Models exposing (..)
 import KnowledgeModels.Import.FileImport.Msgs exposing (Msg(..))
 
@@ -29,12 +30,12 @@ view appState model =
         content =
             case model.file of
                 Just file ->
-                    fileView appState model file.filename
+                    fileView appState model <| File.name file
 
                 Nothing ->
                     dropzone appState model
     in
-    div [ class "KnowledgeModels__Import__FileImport", id dropzoneId ]
+    div [ class "KnowledgeModels__Import__FileImport" ]
         [ FormResult.view model.importing
         , content
         ]
@@ -68,38 +69,32 @@ fileView appState model fileName =
 dropzone : AppState -> Model -> Html Msg
 dropzone appState model =
     div (dropzoneAttributes model)
-        [ label [ class "btn btn-secondary btn-file" ]
-            [ lx_ "dropzone.choose" appState
-            , input [ id fileInputId, type_ "file", on "change" (Decode.succeed FileSelected) ] []
-            ]
+        [ button [ class "btn btn-secondary", onClick PickFiles ] [ lx_ "dropzone.choose" appState ]
         , p [] [ lx_ "dropzone.drop" appState ]
         ]
 
 
 dropzoneAttributes : Model -> List (Attribute Msg)
 dropzoneAttributes model =
-    let
-        cssClass =
-            case model.dnd of
-                0 ->
-                    ""
-
-                _ ->
-                    "active"
-    in
-    [ class ("dropzone " ++ cssClass)
-    , id dropzoneId
-    , onDragEvent "dragenter" DragEnter
-    , onDragEvent "dragover" DragOver
-    , onDragEvent "dragleave" DragLeave
+    [ class "dropzone"
+    , classList [ ( "active", model.hover ) ]
+    , hijackOn "dragenter" (D.succeed DragEnter)
+    , hijackOn "dragover" (D.succeed DragEnter)
+    , hijackOn "dragleave" (D.succeed DragLeave)
+    , hijackOn "drop" dropDecoder
     ]
 
 
-onDragEvent : String -> Msg -> Attribute Msg
-onDragEvent event msg =
-    custom event <|
-        Decode.succeed
-            { stopPropagation = True
-            , preventDefault = True
-            , message = msg
-            }
+dropDecoder : Decoder Msg
+dropDecoder =
+    D.at [ "dataTransfer", "files" ] (D.oneOrMore GotFiles File.decoder)
+
+
+hijackOn : String -> Decoder msg -> Attribute msg
+hijackOn event decoder =
+    preventDefaultOn event (D.map hijack decoder)
+
+
+hijack : msg -> ( msg, Bool )
+hijack msg =
+    ( msg, True )

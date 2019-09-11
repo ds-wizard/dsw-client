@@ -2,7 +2,6 @@ module Subscriptions exposing (subscriptions)
 
 import Common.Menu.Subscriptions
 import KMEditor.Subscriptions
-import KnowledgeModels.Subscriptions
 import Models exposing (Model)
 import Msgs exposing (Msg(..))
 import Routes
@@ -15,9 +14,6 @@ subscriptions model =
             case model.appState.route of
                 Routes.KMEditorRoute route ->
                     KMEditor.Subscriptions.subscriptions KMEditorMsg route model.kmEditorModel
-
-                Routes.KnowledgeModelsRoute route ->
-                    Sub.map KnowledgeModelsMsg <| KnowledgeModels.Subscriptions.subscriptions route model.kmPackagesModel
 
                 _ ->
                     Sub.none

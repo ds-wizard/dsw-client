@@ -5,12 +5,13 @@ import Common.Api exposing (getResultCmd)
 import Common.Api.Packages as PackagesApi
 import Common.ApiError exposing (ApiError, getServerError)
 import Common.AppState exposing (AppState)
-import Common.Locale exposing (l, lg)
-import KnowledgeModels.Import.FileImport.Models exposing (Model, dropzoneId, fileInputId)
+import Common.Locale exposing (lg)
+import File.Select as Select
+import KnowledgeModels.Common.Package exposing (Package)
+import KnowledgeModels.Import.FileImport.Models exposing (Model)
 import KnowledgeModels.Import.FileImport.Msgs exposing (Msg(..))
 import KnowledgeModels.Routes exposing (Route(..))
 import Msgs
-import Ports exposing (FilePortData, createDropzone, fileSelected)
 import Routes
 import Routing exposing (cmdNavigate)
 
@@ -19,28 +20,25 @@ update : Msg -> (Msg -> Msgs.Msg) -> AppState -> Model -> ( Model, Cmd Msgs.Msg 
 update msg wrapMsg appState model =
     case msg of
         DragEnter ->
-            ( { model | dnd = model.dnd + 1 }, createDropzone dropzoneId )
+            ( { model | hover = True }, Cmd.none )
 
         DragLeave ->
-            ( { model | dnd = model.dnd - 1 }, Cmd.none )
+            ( { model | hover = False }, Cmd.none )
 
-        FileSelected ->
-            ( model, fileSelected fileInputId )
+        PickFiles ->
+            ( model, Cmd.map wrapMsg <| Select.files [] GotFiles )
 
-        FileRead data ->
-            ( { model | file = Just data }, Cmd.none )
+        GotFiles file _ ->
+            ( { model | file = Just file }, Cmd.none )
 
         Submit ->
             handleSubmit wrapMsg appState model
 
         Cancel ->
-            ( { model | file = Nothing, importing = Unset, dnd = 0 }, Cmd.none )
+            ( { model | file = Nothing, importing = Unset, hover = False }, Cmd.none )
 
         ImportPackageCompleted result ->
             importPackageCompleted appState model result
-
-        _ ->
-            ( model, Cmd.none )
 
 
 handleSubmit : (Msg -> Msgs.Msg) -> AppState -> Model -> ( Model, Cmd Msgs.Msg )
@@ -55,11 +53,17 @@ handleSubmit wrapMsg appState model =
             ( model, Cmd.none )
 
 
-importPackageCompleted : AppState -> Model -> Result ApiError () -> ( Model, Cmd Msgs.Msg )
+importPackageCompleted : AppState -> Model -> Result ApiError (List Package) -> ( Model, Cmd Msgs.Msg )
 importPackageCompleted appState model result =
     case result of
-        Ok _ ->
-            ( model, cmdNavigate appState (Routes.KnowledgeModelsRoute IndexRoute) )
+        Ok packages ->
+            let
+                route =
+                    List.foldl (always << Just) Nothing packages
+                        |> Maybe.map (Routes.KnowledgeModelsRoute << DetailRoute << .id)
+                        |> Maybe.withDefault (Routes.KnowledgeModelsRoute IndexRoute)
+            in
+            ( model, cmdNavigate appState route )
 
         Err error ->
             ( { model | importing = getServerError error <| lg "apiError.packages.importError" appState }

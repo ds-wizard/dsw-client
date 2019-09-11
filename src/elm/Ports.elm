@@ -1,13 +1,9 @@
 port module Ports exposing
-    ( FilePortData
-    , alert
+    ( alert
     , clearSession
     , clearUnloadMessage
     , copyToClipboard
-    , createDropzone
     , drawMetricsChart
-    , fileContentRead
-    , fileSelected
     , scrollIntoView
     , scrollToTop
     , setUnloadMessage
@@ -26,25 +22,6 @@ port storeSession : Maybe Session -> Cmd msg
 
 
 port clearSession : () -> Cmd msg
-
-
-
--- Import
-
-
-type alias FilePortData =
-    { contents : String
-    , filename : String
-    }
-
-
-port fileSelected : String -> Cmd msg
-
-
-port fileContentRead : (FilePortData -> msg) -> Sub msg
-
-
-port createDropzone : String -> Cmd msg
 
 
 
