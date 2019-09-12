@@ -213,6 +213,11 @@ menuItems appState =
         (faSet "menu.kmEditor" appState)
         (Routes.KMEditorRoute KMEditor.Routes.IndexRoute)
         Perm.knowledgeModel
+    , MenuItem
+        "SHACL Editor"
+        (fa "code")
+        Routes.SHACLEditorRoute
+        Perm.questionnaire
     ]
 
 

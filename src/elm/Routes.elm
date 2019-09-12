@@ -14,6 +14,7 @@ type Route
     | OrganizationRoute
     | PublicRoute Public.Routes.Route
     | QuestionnairesRoute Questionnaires.Routes.Route
+    | SHACLEditorRoute
     | UsersRoute Users.Routes.Route
     | NotAllowedRoute
     | NotFoundRoute

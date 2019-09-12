@@ -27,6 +27,7 @@ import Public.Models
 import Questionnaires.Models
 import Random exposing (Seed)
 import Routes
+import SHACLEditor.Models
 import Users.Models
 
 
@@ -39,6 +40,7 @@ type alias Model =
     , kmPackagesModel : KnowledgeModels.Models.Model
     , publicModel : Public.Models.Model
     , questionnairesModel : Questionnaires.Models.Model
+    , shaclEditorModel : SHACLEditor.Models.Model
     , users : Users.Models.Model
     }
 
@@ -51,8 +53,9 @@ initialModel appState =
     , organizationModel = Organization.Models.initialModel
     , kmEditorModel = KMEditor.Models.initialModel
     , kmPackagesModel = KnowledgeModels.Models.initialModel appState
-    , questionnairesModel = Questionnaires.Models.initialModel
     , publicModel = Public.Models.initialModel
+    , questionnairesModel = Questionnaires.Models.initialModel
+    , shaclEditorModel = SHACLEditor.Models.initialModel
     , users = Users.Models.initialModel
     }
 
@@ -122,6 +125,9 @@ initLocalModel model =
 
         Routes.QuestionnairesRoute route ->
             { model | questionnairesModel = Questionnaires.Models.initLocalModel route model.questionnairesModel }
+
+        Routes.SHACLEditorRoute ->
+            { model | shaclEditorModel = SHACLEditor.Models.initialModel }
 
         Routes.UsersRoute route ->
             { model | users = Users.Models.initLocalModel route model.users }

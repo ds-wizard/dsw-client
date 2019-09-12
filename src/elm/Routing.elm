@@ -40,6 +40,7 @@ matchers appState =
                 ++ Users.Routing.parses Routes.UsersRoute
                 ++ [ map Routes.DashboardRoute (s (lr "dashboard" appState))
                    , map Routes.OrganizationRoute (s (lr "organization" appState))
+                   , map Routes.SHACLEditorRoute (s "shacl-editor")
                    ]
     in
     oneOf parsers
@@ -78,6 +79,9 @@ isAllowed route maybeJwt =
         Routes.UsersRoute usersRoute ->
             Users.Routing.isAllowed usersRoute maybeJwt
 
+        Routes.SHACLEditorRoute ->
+            True
+
         Routes.NotFoundRoute ->
             True
 
@@ -107,6 +111,9 @@ toUrl appState route =
 
                 Routes.PublicRoute publicRoute ->
                     Public.Routing.toUrl appState publicRoute
+
+                Routes.SHACLEditorRoute ->
+                    [ "shacl-editor" ]
 
                 Routes.UsersRoute usersRoute ->
                     Users.Routing.toUrl usersRoute

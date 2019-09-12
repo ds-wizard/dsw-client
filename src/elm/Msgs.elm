@@ -9,6 +9,7 @@ import KnowledgeModels.Msgs
 import Organization.Msgs
 import Public.Msgs
 import Questionnaires.Msgs
+import SHACLEditor.Msgs
 import Time
 import Url exposing (Url)
 import Users.Msgs
@@ -27,4 +28,5 @@ type Msg
     | OrganizationMsg Organization.Msgs.Msg
     | PublicMsg Public.Msgs.Msg
     | QuestionnairesMsg Questionnaires.Msgs.Msg
+    | SHACLEditorMsg SHACLEditor.Msgs.Msg
     | UsersMsg Users.Msgs.Msg

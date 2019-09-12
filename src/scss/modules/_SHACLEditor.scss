@@ -1,0 +1,128 @@
+@import "../variables";
+
+.SHACLEditor {
+    width: 100%;
+    margin-top: -20px;
+    margin-bottom: -20px;
+
+    .editor-header {
+        height: 50px;
+        position: fixed;
+        left: $side-navigation-width;
+        top: 0;
+        right: 0;
+        background: $gray-100;
+        z-index: 10;
+
+        &.with-error {
+            height: 100px;
+        }
+
+        .navigation {
+            height: 50px;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 0.5rem;
+            border-bottom: 1px solid $gray-400;
+
+            & > div {
+                display: flex;
+                align-items: center;
+            }
+
+            .undo {
+                padding: 0 1rem;
+                justify-content: space-around;
+
+                a {
+                    color: $gray-700;
+                    padding: 0.5rem;
+
+                    &:hover {
+                        color: $primary;
+                    }
+
+                    &.disabled {
+                        color: $gray-300;
+                    }
+                }
+            }
+
+            .nav {
+                .nav-link {
+                    display: flex;
+                    align-items: center;
+                    padding: 0.5rem 1.5rem;
+                    text-transform: uppercase;
+
+                    &:not(.active) {
+                        color: $gray-700;
+                    }
+
+                    &:hover {
+                        text-decoration: none;
+                        color: $primary;
+                    }
+
+                    .fa {
+                        margin-right: 10px;
+                    }
+                }
+            }
+
+            .actions {
+                flex-grow: 1;
+                justify-content: flex-end;
+
+                .btn {
+                    margin-left: 1rem;
+                }
+            }
+        }
+
+        .alert {
+            margin: 0;
+            height: 50px;
+            border-radius: 0;
+            border: 0;
+            display: flex;
+            align-items: center;
+        }
+    }
+
+    .editor-body {
+        margin-top: 50px;
+        height: calc(100vh - 50px);
+
+        &.with-error {
+            margin-top: 100px;
+        }
+
+        .editor-textarea {
+            border: none;
+            outline: none;
+            -webkit-box-shadow: none;
+            -moz-box-shadow: none;
+            box-shadow: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            width: 100%;
+            height: 100%;
+            padding: 2rem 4rem;
+            font-family: $font-family-monospace;
+            resize: none;
+        }
+    }
+
+}
+
+
+.side-navigation-collapsed {
+    .SHACLEditor {
+        .editor-header {
+            left: $side-navigation-width-collapsed;
+        }
+    }
+}

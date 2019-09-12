@@ -15,6 +15,7 @@ import Organization.View
 import Public.View
 import Questionnaires.View
 import Routes
+import SHACLEditor.View
 import Users.View
 
 
@@ -63,6 +64,12 @@ view model =
                     |> Public.View.view route model.appState
                     |> Html.map PublicMsg
                     |> Layout.public model
+
+            Routes.SHACLEditorRoute ->
+                model.shaclEditorModel
+                    |> SHACLEditor.View.view model.appState
+                    |> Html.map SHACLEditorMsg
+                    |> Layout.app model
 
             Routes.UsersRoute route ->
                 model.users

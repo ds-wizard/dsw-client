@@ -18,6 +18,7 @@ import Public.Update
 import Questionnaires.Update
 import Routes
 import Routing exposing (parseLocation)
+import SHACLEditor.Update
 import Url exposing (Url)
 import Users.Update
 
@@ -54,6 +55,10 @@ fetchData model =
                 Routes.UsersRoute route ->
                     Cmd.map Msgs.UsersMsg <|
                         Users.Update.fetchData route model.appState
+
+                Routes.SHACLEditorRoute ->
+                    Cmd.map Msgs.SHACLEditorMsg <|
+                        SHACLEditor.Update.fetchData model.appState
 
                 _ ->
                     Cmd.none
@@ -156,6 +161,13 @@ update msg model =
                     Organization.Update.update organizationMsg Msgs.OrganizationMsg model.appState model.organizationModel
             in
             ( { model | organizationModel = organizationModel }, cmd )
+
+        Msgs.SHACLEditorMsg shaclEditorMsg ->
+            let
+                ( shaclEditorModel, cmd ) =
+                    SHACLEditor.Update.update shaclEditorMsg Msgs.SHACLEditorMsg model.appState model.shaclEditorModel
+            in
+            ( { model | shaclEditorModel = shaclEditorModel }, cmd )
 
         Msgs.PublicMsg publicMsg ->
             let
